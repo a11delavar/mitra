@@ -222,7 +222,11 @@ export class RoutineRow extends Component {
 		}
 		const { strip } = RoutineStore
 		const last = dates.last(strip)
-		const cells = [...Array.from({ length: strip - last.length }, () => 'none'), ...last.map(date => String(dates.statusOf(date)))]
+		// Each with its date and what became of it, as its tooltip.
+		const cells = [
+			...Array.from({ length: strip - last.length }, () => ({ state: 'none', title: '' })),
+			...last.map(date => ({ state: String(dates.statusOf(date)), title: `${(date.start ?? date.due)!.format({ dateStyle: 'medium' })} · ${dates.statusOf(date)!.format()}` })),
+		]
 		const rule = RoutineStore.ruleOf(routine)
 		const { next } = dates
 		const time = RoutineStore.timeOf(routine)
@@ -240,7 +244,7 @@ export class RoutineRow extends Component {
 			${!today ? html.nothing : changeable ? html`
 				<mitra-entry-status .entry=${this.tickEntry} @pointerdown=${this.claim} @keydown=${this.claim} @change=${this.handleTick}></mitra-entry-status>
 			` : RoutineStore.isTask(routine) ? html.nothing : html`<span class="time">${time ?? ''}</span>`}
-			<span class="strip">${cells.map(status => html`<i class="routine-cell" data-state=${status}></i>`)}</span>
+			<span class="strip">${cells.map(({ state, title }) => html`<i class="routine-cell" data-state=${state} title=${title}></i>`)}</span>
 			<span class="ratio" title=${t('${count:number} of ${total:number} kept', { count: kept, total: of })}>
 				${t('${count:number} of ${total:number}', { count: kept, total: of })}
 			</span>

@@ -58,6 +58,10 @@ El estado de hoy está al final de la fila de una rutina: la casilla de una tare
 
 Haz clic en una fila para ver más: desde cuándo existe la rutina, sus últimas semanas como una cuadrícula de días, cuántas de las últimas y del último año cumpliste, y el día de la semana en que más falla. Su menú **⋯** ofrece **Hecho hoy** para una tarea, **Cancelado** para cancelar la repetición de hoy y **Mostrar en el calendario** para abrir la siguiente.
 
+## Corregir una rutina
+
+Mitra encuentra las rutinas por sí mismo, y el menú **⋯** del detalle lo corrige donde se equivocó. **Renombrar…** le da a la rutina un nombre propio; también puedes hacer clic en su nombre y escribir. El botón junto a un nombre propio, o volver a escribir el título de sus entradas, la nombra otra vez según sus entradas. **Fusionar con** abre las demás rutinas del mismo calendario; elegir una une las dos, para un hábito con dos títulos, como «Pastillas de la mañana» y «Pastillas de la noche». **No es una rutina** la saca de la pestaña para siempre: las entradas con su título ya no se agrupan en una rutina y siguen en tu calendario.
+
 ## Usar una rutina
 
 Apunta a una rutina para ver su título y, si es una entrada que se repite, con qué frecuencia lo hace. Haz clic en ella para abrir su primera entrada en esa fila: la semana en la vista de mes o el mes en la vista de año.

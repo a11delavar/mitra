@@ -1,9 +1,11 @@
 import { Component, component, css, event, html, property, query, state } from '@a11d/lit'
 import { ResizeController } from '@3mo/resize-observer'
 import { DateTime } from '@3mo/date-time'
+import { DissolveRoutine, MergeRoutines, RenameRoutine } from '#operations'
 import { centered, devicePixel, type Popover } from '#design'
 import '#features/calendar/client/DateTime.calendar.js'
 import { EntryStatus, EntryType } from '#features/entries'
+import { reportSaveError } from '#features/entries/client/EntryStore.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { TimeZone } from '#features/time/TimeZone.js'
@@ -11,6 +13,7 @@ import { type Routine } from '../Routine.js'
 import { RoutineEntryOccurrenceStatus } from '../RoutineEntryOccurrenceStatus.js'
 import { RoutineStore } from './RoutineStore.js'
 import { cellStep } from './cellStep.css.js'
+import { DialogDissolveRoutine } from './DialogDissolveRoutine.js'
 
 /** Which status a day of the year grid shows when several dates fall on it: the one that asks most of the reader. */
 const precedence: ReadonlyArray<RoutineEntryOccurrenceStatus> = [
@@ -32,6 +35,8 @@ export class RoutineDetails extends Component {
 	@property({ type: Object }) routine?: Routine
 
 	@query('mitra-popover') private readonly popoverElement?: Popover
+	@query('.name') private readonly nameInput?: HTMLInputElement
+
 	readonly routines = new RoutineStore(this)
 
 	/** How many of the last weeks the grid draws: as many as fit its width, a year at most. */
@@ -78,6 +83,44 @@ export class RoutineDetails extends Component {
 		}
 	}
 
+	/** The other routines of its calendar, which it can merge into. */
+	private get others() {
+		return [...RoutineStore.routines.values()].filter(routine => routine.sourceId === this.routine?.sourceId && routine.id !== this.routine.id)
+	}
+
+	private readonly handleRename = async () => {
+		const name = this.nameInput?.value.trim() ?? ''
+		if (name === this.routine?.label) {
+			return
+		}
+		await this.rename(name || null)
+	}
+
+	private async rename(name: string | null) {
+		await RenameRoutine.call({ id: this.routine!.id, name }).catch(reportSaveError)
+		await RoutineStore.refresh()
+	}
+
+	private readonly startRename = () => {
+		requestAnimationFrame(() => this.nameInput?.select())
+	}
+
+	private async mergeInto(into: Routine) {
+		this.hide()
+		await MergeRoutines.call({ id: this.routine!.id, into: into.id }).catch(reportSaveError)
+		await RoutineStore.refresh()
+	}
+
+	private readonly handleDissolve = async () => {
+		const routine = this.routine!
+		if (!await new DialogDissolveRoutine({ name: routine.label }).confirm().catch(() => false)) {
+			return
+		}
+		this.hide()
+		await DissolveRoutine.call({ id: routine.id }).catch(reportSaveError)
+		await RoutineStore.refresh()
+	}
+
 	private hide() {
 		this.popoverElement?.hide()
 	}
@@ -114,8 +157,14 @@ export class RoutineDetails extends Component {
 				cursor: default;
 			}
 
-			/* Beside its row, or where neither side has room, in the middle of the viewport. It hangs from the row's named
+			/* Always beside its row where it fits: from the row's top down, else up from its bottom (a row low in the list),
+			   else centred on it; only where no side has room, in the middle of the viewport. It hangs from the row's named
 			   anchor rather than the one show() gives, which hiding takes away while it fades out. */
+			@position-try --mitra-routine-details-beside {
+				position-area: inline-end span-all;
+				align-self: anchor-center;
+			}
+
 			mitra-routine-details > mitra-popover:not([data-sheet]) {
 				inline-size: 25rem;
 				max-inline-size: calc(100dvw - 1.5rem);
@@ -124,7 +173,7 @@ export class RoutineDetails extends Component {
 				margin: 0 0.5rem;
 				position-anchor: --mitra-routine-details;
 				position-area: inline-end span-block-end;
-				position-try-fallbacks: flip-inline, --centered;
+				position-try-fallbacks: flip-block, --mitra-routine-details-beside, flip-inline, flip-block flip-inline, --centered;
 			}
 
 			mitra-routine-details .routine-detail {
@@ -153,10 +202,27 @@ export class RoutineDetails extends Component {
 					}
 				}
 
-				> .name {
-					margin: 0.25rem 0 0.5rem;
+				/* The name, and beside a name of the person's own the way back to its entries' titles. */
+				> .title {
+					display: flex;
+					align-items: center;
+					gap: 0.25rem;
+					margin: 0.25rem -0.25rem 0.5rem;
+				}
+
+				> .title > .name {
+					all: unset;
+					flex: 1;
+					min-inline-size: 0;
+					padding: 0.125rem 0.25rem;
+					border-radius: var(--border-radius);
 					font-size: 1.1rem;
 					font-weight: 600;
+					color: var(--color-text);
+
+					&:hover, &:focus {
+						background: color-mix(in srgb, var(--color-text) 6%, transparent);
+					}
 				}
 
 				> .row {
@@ -268,8 +334,10 @@ export class RoutineDetails extends Component {
 		}
 		const { first, today, days } = RoutineDetails.daysOf(this.weeks)
 		const byDay = Map.groupBy(dates.last(Infinity), date => String(date.dayIn(TimeZone.localOrDefault)))
-		const statusOf = (day: Temporal.PlainDate) => Temporal.PlainDate.compare(day, today) > 0 ? 'future'
-			: String(precedence.find(status => byDay.get(day.toString())?.some(date => dates.statusOf(date) === status)) ?? 'none')
+		const statusOn = (day: Temporal.PlainDate) => precedence.find(status => byDay.get(day.toString())?.some(date => dates.statusOf(date) === status))
+		const stateOf = (day: Temporal.PlainDate) => Temporal.PlainDate.compare(day, today) > 0 ? 'future' : String(statusOn(day) ?? 'none')
+		// Its date, and what became of it where it had one.
+		const titleOf = (day: Temporal.PlainDate) => [dayOf(day.toString()).format({ dateStyle: 'medium' }), statusOn(day)?.format()].filter(Boolean).join(' · ')
 		const weekday = (index: number) => dayOf(first.add({ days: index }).toString()).format({ weekday: 'short' })
 		return html`
 			<div class="year" style="--weeks: ${days.length / 7}">
@@ -280,7 +348,7 @@ export class RoutineDetails extends Component {
 				</span>
 				<span class="weekdays">${[0, 1, 2, 3, 4, 5, 6].map(index => html`<span>${index % 2 ? '' : weekday(index)}</span>`)}</span>
 				<span class="cells">
-					${days.map(day => html`<i class="routine-cell" data-state=${statusOf(day)} title=${dayOf(day.toString()).format({ dateStyle: 'medium' })}></i>`)}
+					${days.map(day => html`<i class="routine-cell" data-state=${stateOf(day)} title=${titleOf(day)}></i>`)}
 				</span>
 			</div>
 		`
@@ -349,11 +417,28 @@ export class RoutineDetails extends Component {
 								${!today && !dates.next ? html.nothing : html`
 									<mitra-menu-item icon="calendar-search" @click=${this.handleShow}>${t('Show in calendar')}</mitra-menu-item>
 								`}
+								<hr>
+								<mitra-menu-item icon="pencil" @click=${this.startRename}>${t('Rename…')}</mitra-menu-item>
+								${!this.others.length ? html.nothing : html`
+									<mitra-menu-item icon="merge">
+										${t('Merge into')}
+										<mitra-menu slot="submenu">
+											${this.others.map(other => html`<mitra-menu-item @click=${() => this.mergeInto(other)}>${other.label}</mitra-menu-item>`)}
+										</mitra-menu>
+									</mitra-menu-item>
+								`}
+								<mitra-menu-item icon="circle-off" @click=${this.handleDissolve}>${t('Not a routine')}</mitra-menu-item>
 							</mitra-menu>
 						</mitra-popover-container>
 						<mitra-icon-button icon="x" label=${t('Close')} @click=${() => this.hide()}></mitra-icon-button>
 					</header>
-					<span class="name">${routine.label}</span>
+					<div class="title">
+						<input class="name" aria-label=${t('Name')} .value=${routine.label} @change=${this.handleRename}
+							@keydown=${(e: KeyboardEvent) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}>
+						${!routine.name ? html.nothing : html`
+							<mitra-icon-button icon="undo-2" label=${t('Name after its entries')} title=${routine.titled} @click=${() => this.rename(null)}></mitra-icon-button>
+						`}
+					</div>
 					<div class="row">
 						<mitra-icon icon="repeat"></mitra-icon>
 						<span>${[routine.frequency(RoutineStore.ruleOf(routine), dates.next?.start), time].filter(Boolean).join(' · ')}</span>

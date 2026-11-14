@@ -50,6 +50,16 @@ export class RoutineEntryOccurrenceStatus {
 		return this === RoutineEntryOccurrenceStatus.Kept || this === RoutineEntryOccurrenceStatus.Cancelled || this === RoutineEntryOccurrenceStatus.Missed
 	}
 
+	format() {
+		switch (this.code) {
+			case 'upcoming': return t('Upcoming')
+			case 'open': return t('Still open')
+			case 'kept': return t('Kept')
+			case 'cancelled': return t('Cancelled')
+			case 'missed': return t('Missed')
+		}
+	}
+
 	toString() {
 		return this.code
 	}

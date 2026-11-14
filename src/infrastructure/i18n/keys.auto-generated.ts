@@ -10,6 +10,7 @@ declare global {
 		"\"${heading}\" could not be added: ${message}": unknown
 		"\"${heading}\" could not be copied: ${message}": unknown
 		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
+		"\"${name}\" leaves the Routines tab, and entries with its title are no longer gathered into a routine. Its entries stay on your calendar.": unknown
 		"${browser} on ${platform}": unknown
 		"${count:number} more": unknown
 		"${count:number} of ${total:number}": unknown
@@ -345,9 +346,11 @@ declare global {
 		"Interval": unknown
 		"Join ${service}": unknown
 		"Keep": unknown
+		"Keep it": unknown
 		"Keep the calendar": unknown
 		"Keep the chain intact": unknown
 		"kept": unknown
+		"Kept": unknown
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
 		"Language": unknown
@@ -373,7 +376,9 @@ declare global {
 		"Match the system": unknown
 		"Maybe": unknown
 		"McpSetting.Keywords": unknown
+		"Merge into": unknown
 		"minutes": unknown
+		"Missed": unknown
 		"Mitra": unknown
 		"Mitra.Hint": unknown
 		"modified": unknown
@@ -400,6 +405,7 @@ declare global {
 		"MoveSourceEntries.Keywords": unknown
 		"Moving ${count:pluralityNumber} entries…": unknown
 		"Name": unknown
+		"Name after its entries": unknown
 		"navigate": unknown
 		"Navigation": unknown
 		"never": unknown
@@ -427,6 +433,8 @@ declare global {
 		"No matching entries": unknown
 		"No release notes available": unknown
 		"None": unknown
+		"Not a routine": unknown
+		"Not a routine?": unknown
 		"Nothing from the file was added.": unknown
 		"Nothing is deleted here until its copy has landed": unknown
 		"Nothing planned yet. Draw a task on the row below": unknown
@@ -513,6 +521,7 @@ declare global {
 		"Rename": unknown
 		"Rename this device": unknown
 		"Rename time zone": unknown
+		"Rename…": unknown
 		"Repeat": unknown
 		"Repeating": unknown
 		"Repeating entries cannot repeat in ${name}": unknown
@@ -569,6 +578,7 @@ declare global {
 		"Sources": unknown
 		"Start date": unknown
 		"Status": unknown
+		"Still open": unknown
 		"Stop notifying this device": unknown
 		"Subtask of": unknown
 		"Subtasks": unknown
@@ -644,6 +654,7 @@ declare global {
 		"Unscheduled": unknown
 		"Until": unknown
 		"Untitled": unknown
+		"Upcoming": unknown
 		"Update available": unknown
 		"Update available: ${version}": unknown
 		"Uploading…": unknown

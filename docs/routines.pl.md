@@ -58,6 +58,10 @@ Dzisiejszy status jest na końcu wiersza rutyny: pole wyboru zadania, które odh
 
 Kliknij wiersz, aby zobaczyć więcej: od kiedy trwa rutyna, jej ostatnie tygodnie jako siatkę dni, ile z ostatnich i z ostatniego roku wykonałeś oraz w który dzień tygodnia najczęściej odpada. Jej menu **⋯** ma **Zrobione dziś** dla zadania, **Anulowane**, aby anulować dzisiejsze wystąpienie, i **Pokaż w kalendarzu**, aby otworzyć następne.
 
+## Poprawianie rutyny
+
+Mitra sama znajduje rutyny, a menu **⋯** w szczegółach poprawia ją tam, gdzie się pomyliła. **Zmień nazwę…** nadaje rutynie własną nazwę; możesz też kliknąć jej nazwę i pisać. Przycisk obok własnej nazwy albo ponowne wpisanie tytułu jej wpisów przywraca nazwę według wpisów. **Scal z** otwiera pozostałe rutyny tego samego kalendarza; wybranie jednej łączy obie, gdy jeden nawyk ma dwa tytuły, na przykład „Tabletki rano” i „Tabletki wieczorem”. **To nie rutyna** usuwa ją z karty na dobre: wpisy o jej tytule nie są już łączone w rutynę i zostają w twoim kalendarzu.
+
 ## Korzystanie z rutyny
 
 Wskaż rutynę, aby zobaczyć jej tytuł oraz, jeśli to wpis cykliczny, jak często się powtarza. Kliknij ją, aby otworzyć jej pierwszy wpis w danym wierszu: w tygodniu w widoku miesiąca albo w miesiącu w widoku roku.

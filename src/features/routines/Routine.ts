@@ -76,9 +76,31 @@ export class Routine extends Entity {
 		Object.assign(this, init)
 	}
 
+	/** Gives it the person's name; none, or a blank one, names it after its members again. */
+	rename(name: string | null | undefined) {
+		const named = name?.trim()
+		// Its entries' titles again, typed out, are no name of the person's own: it follows them as they change.
+		this.name = named && named !== this.titled ? named : undefined
+	}
+
+	/** Not a routine after all: it keeps its members, and those that join it later, out of sight. */
+	dissolve() {
+		this.dissolved = true
+	}
+
+	/** A routine again, after it was dissolved. */
+	restart() {
+		this.dissolved = undefined
+	}
+
 	/** What it is called: the person's name, else the titles its members wear, the newest first. */
 	get label() {
-		return this.name ?? this.titles?.slice(0, 3).format() ?? ''
+		return this.name ?? this.titled
+	}
+
+	/** What its entries call it: the titles they wear, the newest first. */
+	get titled() {
+		return this.titles?.slice(0, 3).format() ?? ''
 	}
 
 	/** How often it comes, in the reader's language: `rule`, its entries' tightest, from `start` on, else its cadence. */

@@ -59,6 +59,7 @@ import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { RoutinesTab } from '#features/routines/client/RoutinesTab.js'
 import { RoutineRow } from '#features/routines/client/RoutineRow.js'
 import { RoutineDetails } from '#features/routines/client/RoutineDetails.js'
+import { DialogDissolveRoutine } from '#features/routines/client/DialogDissolveRoutine.js'
 import { ScrollDeviceController } from '#features/calendar/client/ScrollDeviceController.js'
 import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
@@ -235,6 +236,7 @@ export class Mitra extends Application {
 			${RoutinesTab.styles}
 			${RoutineRow.styles}
 			${RoutineDetails.styles}
+			${DialogDissolveRoutine.styles}
 			${Weeks.styles}
 			${Months.styles}
 			${Days.styles}

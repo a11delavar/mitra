@@ -58,6 +58,10 @@ Today's status sits at the end of a routine's row: a task's checkbox, which tick
 
 Click a row to see more: since when the routine runs, its recent weeks as a grid of days, how many of the last ones and of the past year you kept, and the weekday it slips on most. Its **⋯** menu has **Done today** for a task, **Cancelled** for today's occurrence, and **Show in calendar** to open the next one.
 
+## Correct a routine
+
+Mitra finds routines by itself, and the detail's **⋯** menu corrects it where it got one wrong. **Rename…** gives the routine a name of your own; you can also click its name and type. The button beside a name of your own, or typing its entries' title back, names it after its entries again. **Merge into** opens the other routines of the same calendar; picking one joins the two, for one habit that goes by two titles, such as "Morning pills" and "Evening pills". **Not a routine** takes it out of the tab for good: entries with its title are no longer gathered into a routine, and they stay on your calendar.
+
 ## Use a routine
 
 Point at a routine to see its title and, if it's a repeating entry, how often it repeats. Click it to open its first entry in that row: the week in the month view, or the month in the year view.

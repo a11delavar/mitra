@@ -58,6 +58,10 @@ Der heutige Status steht am Ende der Zeile einer Routine: bei einer Aufgabe ihr 
 
 Klick auf eine Zeile, um mehr zu sehen: seit wann die Routine läuft, ihre letzten Wochen als Raster von Tagen, wie viele der letzten und des vergangenen Jahres du eingehalten hast und an welchem Wochentag sie am ehesten ausfällt. Ihr Menü **⋯** bietet **Heute erledigt** für eine Aufgabe, **Abgebrochen**, um die heutige Wiederholung abzusagen, und **Im Kalender zeigen**, um die nächste zu öffnen.
 
+## Eine Routine korrigieren
+
+Mitra findet Routinen von selbst, und das Menü **⋯** in den Details korrigiert es, wo es sich geirrt hat. **Umbenennen…** gibt der Routine einen eigenen Namen; du kannst auch auf ihren Namen klicken und tippen. Die Schaltfläche neben einem eigenen Namen, oder den Titel ihrer Einträge wieder eintippen, benennt sie wieder nach ihren Einträgen. **Zusammenführen mit** öffnet die anderen Routinen desselben Kalenders; eine davon fügt die beiden zusammen, für eine Gewohnheit mit zwei Titeln, etwa „Tabletten morgens“ und „Tabletten abends“. **Keine Routine** nimmt sie dauerhaft aus dem Tab: Einträge mit ihrem Titel werden nicht mehr zu einer Routine zusammengefasst und bleiben in deinem Kalender.
+
 ## Eine Routine nutzen
 
 Zeig auf eine Routine, um ihren Titel zu sehen und, wenn sie ein wiederkehrender Eintrag ist, wie oft sie sich wiederholt. Klick darauf, um ihren ersten Eintrag in dieser Zeile zu öffnen: die Woche in der Monatsansicht oder den Monat in der Jahresansicht.

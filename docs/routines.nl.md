@@ -58,6 +58,10 @@ De status van vandaag staat aan het eind van de rij van een routine: het selecti
 
 Klik op een rij voor meer: sinds wanneer de routine loopt, haar laatste weken als raster van dagen, hoeveel van de laatste en van het afgelopen jaar je hebt gedaan, en op welke weekdag ze het vaakst erbij inschiet. Het menu **⋯** heeft **Vandaag gedaan** voor een taak, **Geannuleerd** om de herhaling van vandaag te annuleren, en **In agenda tonen** om de volgende te openen.
 
+## Een routine corrigeren
+
+Mitra vindt routines zelf, en het menu **⋯** in de details corrigeert waar het er een verkeerd heeft. **Naam wijzigen…** geeft de routine een eigen naam; je kunt ook op de naam klikken en typen. De knop naast een eigen naam, of de titel van haar items opnieuw typen, geeft haar weer de naam van haar items. **Samenvoegen met** opent de andere routines van dezelfde agenda; er een kiezen voegt de twee samen, voor één gewoonte met twee titels, zoals ‘Ochtendpillen’ en ‘Avondpillen’. **Geen routine** haalt haar voorgoed uit het tabblad: items met haar titel worden niet meer tot een routine samengevoegd, en ze blijven in je agenda.
+
 ## Een routine gebruiken
 
 Houd de muis boven een routine om de titel te zien en, als het een terugkerend item is, hoe vaak het wordt herhaald. Klik erop om het eerste item in die rij te openen: de week in de maandweergave, of de maand in de jaarweergave.

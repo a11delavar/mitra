@@ -68,6 +68,13 @@ export class Menu extends Popover {
 				display: flex;
 			}
 
+			/* A submenu, beside the item that opens it, its first item level with that one. */
+			:host([slot=submenu]) {
+				margin: -0.25rem 0.25rem;
+				position-area: inline-end span-block-end;
+				position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline, --centered;
+			}
+
 			::slotted(hr) {
 				flex-shrink: 0;
 				inline-size: 100%;
@@ -85,7 +92,8 @@ export class Menu extends Popover {
 
 /**
  * A row of a `mitra-menu`. `type` makes it a radio or a checkbox of the menu, `selected` its state; a checkbox
- * keeps the menu open, so several can be toggled in one go. With `href` it is a link.
+ * keeps the menu open, so several can be toggled in one go. With `href` it is a link. A `mitra-menu` in its `submenu`
+ * slot opens beside it, on a click, a hover or the arrow towards it, and keeps the menu around it open.
  */
 @component('mitra-menu-item')
 export class MenuItem extends Component {
@@ -97,8 +105,43 @@ export class MenuItem extends Component {
 	@property() href?: string
 	@property() target?: string
 
+	/** The menu it opens beside itself, from its `submenu` slot. */
+	get submenu() {
+		return this.querySelector<Menu>(':scope > mitra-menu[slot=submenu]') ?? undefined
+	}
+
+	/** Opens its submenu under the pointer, and closes a sibling's it left. */
+	@eventListener('pointerenter')
+	protected handlePointerEnter() {
+		for (const sibling of this.parentElement?.children ?? []) {
+			if (sibling !== this && sibling instanceof MenuItem) {
+				sibling.submenu?.hide()
+			}
+		}
+		if (!this.disabled) {
+			this.submenu?.show(this)
+		}
+	}
+
+	@eventListener('keydown')
+	protected handleKeyDown(e: KeyboardEvent) {
+		const towards = this.matches(':dir(rtl)') ? 'ArrowLeft' : 'ArrowRight'
+		if (e.target === this && e.key === towards && this.submenu && !this.disabled) {
+			e.preventDefault()
+			this.submenu.show(this)
+		}
+	}
+
 	protected override updated() {
 		this.setAttribute('role', this.type === 'radio' ? 'menuitemradio' : this.type === 'checkbox' ? 'menuitemcheckbox' : 'menuitem')
+		// An item with a submenu says so, and whether it is open, before it was ever opened.
+		if (this.submenu) {
+			this.setAttribute('aria-haspopup', 'menu')
+			this.setAttribute('aria-expanded', String(this.submenu.matches(':popover-open')))
+		} else {
+			this.removeAttribute('aria-haspopup')
+			this.removeAttribute('aria-expanded')
+		}
 		if (this.type) {
 			this.setAttribute('aria-checked', String(this.selected))
 		} else {
@@ -109,6 +152,15 @@ export class MenuItem extends Component {
 
 	@eventListener('click')
 	protected handleClick(e: MouseEvent & { [MenuController.preventClose]?: boolean }) {
+		// A choice in its submenu is the menu's to close on; a click on the item itself only opens the submenu.
+		if (this.submenu?.contains(e.target as Node)) {
+			return
+		}
+		if (this.submenu && !this.disabled) {
+			e[MenuController.preventClose] = true
+			this.submenu.show(this)
+			return
+		}
 		if (this.disabled) {
 			e.stopImmediatePropagation()
 			e[MenuController.preventClose] = true
@@ -122,6 +174,34 @@ export class MenuItem extends Component {
 		}
 	}
 
+	/** Its submenu opening or closing, which `aria-expanded` follows: a toggle does not bubble, so it is caught on its way down. */
+	@eventListener({ type: 'toggle', options: { capture: true } })
+	protected handleSubmenuToggle(e: Event) {
+		if (e.target === this.submenu) {
+			this.requestUpdate()
+		}
+	}
+
+	/**
+	 * Focus landing in its submenu is the submenu's alone: the menu around it would take it for focus on this item,
+	 * focus the item, and so close the submenu it had just opened.
+	 */
+	private readonly handleSubmenuFocusIn = (e: FocusEvent) => e.stopPropagation()
+
+	/**
+	 * Keys in its submenu are the submenu's alone, or the menu around it would move or close too. The arrow away from
+	 * it closes it and returns to this item.
+	 */
+	private readonly handleSubmenuKeyDown = (e: KeyboardEvent) => {
+		e.stopPropagation()
+		const away = this.matches(':dir(rtl)') ? 'ArrowRight' : 'ArrowLeft'
+		if (e.key === away && !e.defaultPrevented) {
+			e.preventDefault()
+			this.submenu?.hide()
+			this.focus()
+		}
+	}
+
 	static override get styles() {
 		return css`
 			:host {
@@ -132,7 +212,9 @@ export class MenuItem extends Component {
 				outline: none;
 			}
 
-			:host(:is(:hover, :focus)) {
+			/* Under the pointer, or current for the keyboard: focus handed back after a pointer, as a submenu closing
+			   does, leaves no row lit where the pointer is not. */
+			:host(:is(:hover, :focus-visible)) {
 				${activated};
 			}
 
@@ -171,6 +253,14 @@ export class MenuItem extends Component {
 			::slotted(kbd) {
 				margin-inline-start: auto;
 			}
+
+			[part=chevron] {
+				margin-inline: auto -0.25rem;
+
+				&:dir(rtl) {
+					transform: scaleX(-1);
+				}
+			}
 		`
 	}
 
@@ -178,6 +268,8 @@ export class MenuItem extends Component {
 		return html`
 			${!this.icon ? html.nothing : html`<mitra-icon part="icon" icon=${this.icon}></mitra-icon>`}
 			<slot></slot>
+			${!this.submenu ? html.nothing : html`<mitra-icon part="chevron" icon="chevron-right"></mitra-icon>`}
+			<slot name="submenu" @slotchange=${() => this.requestUpdate()} @focusin=${this.handleSubmenuFocusIn} @keydown=${this.handleSubmenuKeyDown}></slot>
 		`
 	}
 }

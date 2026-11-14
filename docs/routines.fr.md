@@ -58,6 +58,10 @@ Le statut du jour se trouve au bout de la ligne d’une routine : la case à coc
 
 Cliquez sur une ligne pour en voir plus : depuis quand la routine existe, ses dernières semaines en grille de jours, combien des dernières et de l’année écoulée vous avez tenues, et le jour de la semaine où elle flanche le plus. Son menu **⋯** propose **Fait aujourd’hui** pour une tâche, **Annulé** pour annuler l’occurrence du jour, et **Afficher dans le calendrier** pour ouvrir la suivante.
 
+## Corriger une routine
+
+Mitra trouve les routines de lui-même, et le menu **⋯** du détail le corrige là où il s’est trompé. **Renommer…** donne à la routine un nom à vous ; vous pouvez aussi cliquer sur son nom et taper. Le bouton à côté d’un nom à vous, ou retaper le titre de ses entrées, la nomme de nouveau d’après ses entrées. **Fusionner avec** ouvre les autres routines du même calendrier ; en choisir une réunit les deux, pour une habitude qui porte deux titres, comme « Comprimés du matin » et « Comprimés du soir ». **Pas une routine** la retire de l’onglet pour de bon : les entrées portant son titre ne sont plus regroupées en routine et restent dans votre calendrier.
+
 ## Utiliser une routine
 
 Pointez une routine pour voir son titre et, s'il s'agit d'une entrée récurrente, sa fréquence. Cliquez dessus pour ouvrir sa première entrée dans cette ligne : la semaine dans la vue mois, ou le mois dans la vue année.

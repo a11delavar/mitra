@@ -58,6 +58,10 @@ Lo stato di oggi sta alla fine della riga di una routine: la casella di un’att
 
 Fai clic su una riga per vedere di più: da quando esiste la routine, le sue ultime settimane come griglia di giorni, quante delle ultime e dell’ultimo anno hai rispettato, e il giorno della settimana in cui cede più spesso. Il suo menu **⋯** offre **Fatto oggi** per un’attività, **Annullato** per annullare l’occorrenza di oggi e **Mostra nel calendario** per aprire la successiva.
 
+## Correggere una routine
+
+Mitra trova le routine da solo, e il menu **⋯** del dettaglio lo corregge dove ha sbagliato. **Rinomina…** dà alla routine un nome tuo; puoi anche fare clic sul suo nome e scrivere. Il pulsante accanto a un nome tuo, o riscrivere il titolo delle sue voci, le ridà il nome delle sue voci. **Unisci a** apre le altre routine dello stesso calendario; sceglierne una unisce le due, per un’abitudine con due titoli, come «Pillole del mattino» e «Pillole della sera». **Non è una routine** la toglie dalla scheda per sempre: le voci con il suo titolo non vengono più raccolte in una routine e restano nel tuo calendario.
+
 ## Usare una routine
 
 Passa il puntatore su una routine per vederne il titolo e, se è una voce ricorrente, ogni quanto si ripete. Cliccala per aprire la sua prima voce in quella riga: la settimana nella vista mensile, o il mese nella vista annuale.

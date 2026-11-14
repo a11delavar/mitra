@@ -180,10 +180,19 @@ export class User {
 	}
 
 	/** The routines of the user's enabled calendars that were not dissolved, each told how often it comes and the titles its entries wear. */
-	async getRoutines(em: EntityManager) {
-		const routines = await em.find(Routine, { $and: [{ dissolved: null }, this.inCalendars({ enabled: true }) as FilterQuery<Routine>] })
+	async getRoutines(em: EntityManager, where: FilterQuery<Routine> = {}) {
+		const routines = await em.find(Routine, { $and: [{ dissolved: null }, where, this.inCalendars({ enabled: true }) as FilterQuery<Routine>] })
 		await Routine.measure(em, routines, this.timeZones?.home?.zone ?? TimeZone.default)
 		return routines
+	}
+
+	/** One of {@link getRoutines}; another user's, or one dissolved, is not found (404). */
+	async getRoutine(em: EntityManager, id: string) {
+		const [routine] = await this.getRoutines(em, { id })
+		if (!routine) {
+			throw new NotFoundError(`Routine ${id} not found`)
+		}
+		return routine
 	}
 
 	/**

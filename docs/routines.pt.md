@@ -58,6 +58,10 @@ O estado de hoje fica no fim da linha de uma rotina: a caixa de seleção de uma
 
 Clique em uma linha para ver mais: desde quando a rotina existe, as suas últimas semanas como uma grade de dias, quantas das últimas e do último ano você cumpriu, e o dia da semana em que ela mais falha. O seu menu **⋯** oferece **Feito hoje** para uma tarefa, **Cancelado** para cancelar a ocorrência de hoje e **Mostrar no calendário** para abrir a próxima.
 
+## Corrigir uma rotina
+
+O Mitra encontra as rotinas sozinho, e o menu **⋯** do detalhe o corrige onde ele errou. **Renomear…** dá à rotina um nome seu; você também pode clicar no nome dela e digitar. O botão ao lado de um nome seu, ou digitar de novo o título das suas entradas, volta a nomeá-la pelas entradas. **Mesclar com** abre as outras rotinas do mesmo calendário; escolher uma junta as duas, para um hábito com dois títulos, como "Comprimidos da manhã" e "Comprimidos da noite". **Não é uma rotina** tira-a da aba de vez: as entradas com o seu título deixam de ser reunidas numa rotina e continuam no seu calendário.
+
 ## Usar uma rotina
 
 Aponte para uma rotina para ver o título e, se for uma entrada recorrente, com que frequência ela se repete. Clique nela para abrir a primeira entrada dessa linha: a semana na vista de mês, ou o mês na vista de ano.
