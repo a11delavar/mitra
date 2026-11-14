@@ -50,6 +50,9 @@ Alles, was Mitra zu einem Eintrag speichert, wird synchronisiert, soweit dein Se
 - [Teilaufgaben](../subtasks.md) und [Abhängigkeiten](../dependencies.md).
 - [Anhänge](../attachments.md). Andere Apps im selben Kalender sehen die Dateien, und Mitra zeigt die, die sie angehängt haben.
 
+> [!NOTE]
+> Andere Kalender-Apps lesen bei einzelnen Einträgen nur Farbnamen und zeigen die Farbe eines Eintrags daher als den nächstliegenden Namen, Mitras Blau zum Beispiel als `steelblue`. Mitra behält die genaue Farbe, und andere Mitra-Installationen lesen sie ebenfalls zurück, außer über Google, das sie verwirft.
+
 Ein sich wiederholender Eintrag bleibt auf dem Server eine Serie. Wenn du ein einzelnes Vorkommen änderst, fragt Mitra, ob du **Dieser Eintrag**, **Dieser und folgende Einträge** oder **Alle Einträge** meinst, und ändert die Serie entsprechend.
 
 Eine Aufgabe behält ihren Termin, ihr [Fälligkeitsdatum und ihre Schätzung](../planning.md#schedule-constraints-and-planning). Auf dem Server werden sie so gespeichert:

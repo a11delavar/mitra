@@ -50,6 +50,9 @@ Todo lo que Mitra guarda de una entrada se sincroniza, en la medida en que tu se
 - [Subtareas](../subtasks.md) y [dependencias](../dependencies.md).
 - [Archivos adjuntos](../attachments.md). Las demás apps del mismo calendario ven los archivos, y Mitra muestra los que añadieron ellas.
 
+> [!NOTE]
+> Las demás apps de calendario solo leen nombres de color en entradas sueltas, así que muestran el color de una entrada como el nombre más cercano, por ejemplo el azul de Mitra como `steelblue`. Mitra conserva el color exacto, y otras instalaciones de Mitra también lo recuperan, salvo a través de Google, que lo descarta.
+
 Una entrada recurrente sigue siendo una sola serie en el servidor. Cuando cambias una única repetición, Mitra pregunta si te refieres a **Esta entrada**, **Esta y las siguientes entradas** o **Todas las entradas**, y cambia la serie en consecuencia.
 
 Una tarea conserva su programación, su [fecha de vencimiento y su estimación](../planning.md#schedule-constraints-and-planning). En el servidor se guardan así:

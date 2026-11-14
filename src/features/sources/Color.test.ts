@@ -40,3 +40,35 @@ describe('Color.unusedAmong', () => {
 		assert.ok(Color.palette.includes(Color.unusedAmong(Color.palette)))
 	})
 })
+
+describe('Color as a CSS name', () => {
+	it('writes each preset as a name of its own and reads it, and the plain names, back as the preset', () => {
+		for (const preset of Color.palette) {
+			assert.equal(Color.fromCss(preset.cssName), preset)
+		}
+		assert.equal(Color.Green.cssName, 'mediumseagreen')
+		assert.equal(Color.fromCss('orange'), Color.Orange)
+		assert.equal(Color.fromCss('Pink'), Color.Pink)
+		assert.equal(Color.fromCss('grey'), Color.Grey)
+	})
+
+	it('writes any other hex as its nearest name, and keeps a name as it is', () => {
+		assert.equal(Color.parse('#fe0000')!.cssName, 'red')
+		assert.equal(Color.parse('#123')!.cssName, Color.parse('#112233')!.cssName)
+		assert.equal(Color.parse('turquoise')!.cssName, 'turquoise')
+		assert.equal(Color.fromCss('turquoise')?.value, 'turquoise')
+	})
+
+	it('settles ties between names of one color the same way every time, and reads either spelling', () => {
+		const cyanish = Color.parse('#01fffe')!
+		assert.equal(cyanish.cssName, 'aqua')
+		assert.ok(cyanish.isWrittenAs('cyan'))
+		assert.ok(!cyanish.isWrittenAs('turquoise'))
+	})
+
+	it('is exact only as a hex no preset stands for', () => {
+		assert.ok(Color.parse('#123456')!.exact)
+		assert.ok(!Color.Blue.exact)
+		assert.ok(!Color.parse('red')!.exact)
+	})
+})

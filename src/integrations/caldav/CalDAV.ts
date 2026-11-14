@@ -312,11 +312,33 @@ export class CalDAV extends Integration<CalDAVCredentials> {
 		}
 	}
 
+	/** RFC 7986 allows only a CSS name in COLOR, so an exact hex travels beside it, trusted only while COLOR still spells its name: another app changing COLOR leaves our line behind. Where `X-` lines are dropped (Google), the entry's own hex is kept the same way. */
+	static colorOf(component: ICAL.Component, current?: Color) {
+		const written = component.getFirstPropertyValue('color')?.toString()
+		if (!written) {
+			return undefined
+		}
+		const exact = Color.parse(component.getFirstPropertyValue('x-mitra-color')?.toString())
+		return [exact, current].find(color => color?.exact && color.isWrittenAs(written)) ?? Color.fromCss(written)
+	}
+
+	static writeColor(component: ICAL.Component, color: Color | undefined) {
+		component.removeAllProperties('x-mitra-color')
+		if (!color) {
+			component.removeAllProperties('color')
+			return
+		}
+		component.updatePropertyWithValue('color', color.cssName)
+		if (color.exact) {
+			component.updatePropertyWithValue('x-mitra-color', color.value)
+		}
+	}
+
 	/** Reads one parsed VEVENT/VTODO onto an entry. */
 	static applyComponent(entry: Entry, component: ICAL.Component, integration: Integration): void {
 		const entryType = component.name === 'vtodo' ? EntryType.Task : EntryType.Event
 		entry.type = entryType
-		entry.color = Color.parse(component.getFirstPropertyValue('color')?.toString())
+		entry.color = CalDAV.colorOf(component, entry.color)
 
 		const tzidOf = (name: string) => component.getFirstProperty(name)?.getParameter('tzid')?.toString()
 		if (entryType.isEvent) {

@@ -119,9 +119,10 @@ export class RoutineDetails extends Component {
 		await RoutineStore.refresh()
 	}
 
-	private readonly handleDissolve = async () => {
+	// Ctrl or ⌘ skips the question, as it skips the scope one for a recurring entry.
+	private readonly handleDissolve = async (e: MouseEvent) => {
 		const routine = this.routine!
-		if (!await new DialogDissolveRoutine({ name: routine.label }).confirm().catch(() => false)) {
+		if (!(e.ctrlKey || e.metaKey) && !await new DialogDissolveRoutine({ name: routine.label }).confirm().catch(() => false)) {
 			return
 		}
 		this.hide()

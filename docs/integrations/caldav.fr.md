@@ -50,6 +50,9 @@ Tout ce que Mitra stocke sur une entrée est synchronisé, dans la mesure où vo
 - Les [sous-tâches](../subtasks.md) et les [dépendances](../dependencies.md).
 - Les [pièces jointes](../attachments.md). Les autres applications du même calendrier voient les fichiers, et Mitra affiche ceux qu'elles ont ajoutés.
 
+> [!NOTE]
+> Les autres applications de calendrier ne lisent que des noms de couleur sur les entrées individuelles : elles affichent donc la couleur d'une entrée sous le nom le plus proche, par exemple le bleu de Mitra comme `steelblue`. Mitra garde la couleur exacte, et les autres installations de Mitra la retrouvent aussi, sauf via Google, qui la supprime.
+
 Une entrée répétée reste une seule série sur le serveur. Quand vous modifiez une seule occurrence, Mitra demande si vous visez **Cette entrée**, **Cette entrée et les suivantes** ou **Toutes les entrées**, et adapte la série en conséquence.
 
 Une tâche conserve son horaire, sa [date d'échéance et son estimation](../planning.md#schedule-constraints-and-planning). Sur le serveur, elles sont enregistrées ainsi :

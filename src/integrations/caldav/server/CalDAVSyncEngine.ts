@@ -457,11 +457,7 @@ export class CalDAVSyncEngine implements SourceSyncEngine {
 			}
 
 			if (keys.includes('color')) {
-				if (incoming.color) {
-					component.updatePropertyWithValue('color', incoming.color.value)
-				} else {
-					component.removeProperty('color')
-				}
+				CalDAV.writeColor(component, incoming.color)
 			}
 
 			if (overrideShift !== undefined) {
@@ -596,7 +592,7 @@ export class CalDAVSyncEngine implements SourceSyncEngine {
 			!entry.start ? void 0 : CalDAV.writeDate(comp, component, 'dtstart', entry.start, entry.allDay, { zone: entry.timeZone })
 			!entry.end ? void 0 : CalDAV.writeDate(comp, component, 'dtend', entry.end, entry.allDay, { zone: entry.timeZone })
 		}
-		!entry.color ? void 0 : component.updatePropertyWithValue('color', entry.color.value)
+		CalDAV.writeColor(component, entry.color)
 		!entry.recurrence ? void 0 : component.updatePropertyWithValue('rrule', ICAL.Recur.fromString(entry.recurrence.toRRule(entry.allDay)))
 		entry.exdates?.forEach(ms => CalDAV.writeDate(comp, component, 'exdate', new Date(ms), entry.allDay, { zone: entry.timeZone, append: true }))
 		if (isTask) {

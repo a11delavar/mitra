@@ -50,6 +50,9 @@ Everything Mitra stores about an entry syncs, as far as your server keeps it:
 - [Subtasks](../subtasks.md) and [dependencies](../dependencies.md).
 - [Attachments](../attachments.md). Other apps on the same calendar see the files, and Mitra shows the ones they added.
 
+> [!NOTE]
+> Other calendar apps only read color names on single entries, so they show an entry's color as the nearest name, Mitra's blue as `steelblue` for example. Mitra keeps the exact color, and other Mitra installs read it back too, except through Google, which drops it.
+
 A repeating entry stays one series on the server. When you change a single occurrence, Mitra asks whether you mean **This entry**, **This and following entries** or **All entries**, and changes the series to match.
 
 A task keeps its schedule, its [due date and its estimate](../planning.md#schedule-constraints-and-planning). On the server they are saved as:

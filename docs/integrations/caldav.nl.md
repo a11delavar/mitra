@@ -50,6 +50,9 @@ Alles wat Mitra over een item bewaart, wordt gesynchroniseerd, voor zover je ser
 - [Subtaken](../subtasks.md) en [afhankelijkheden](../dependencies.md).
 - [Bijlagen](../attachments.md). Andere apps op dezelfde agenda zien de bestanden, en Mitra toont de bestanden die zij hebben toegevoegd.
 
+> [!NOTE]
+> Andere agenda-apps lezen bij losse items alleen kleurnamen, dus tonen ze de kleur van een item als de dichtstbijzijnde naam, het blauw van Mitra bijvoorbeeld als `steelblue`. Mitra houdt de exacte kleur vast, en andere Mitra-installaties lezen die ook terug, behalve via Google, dat hem weggooit.
+
 Een terugkerend item blijft op de server één reeks. Als je één herhaling wijzigt, vraagt Mitra of je **Dit item**, **Dit en volgende items** of **Alle items** bedoelt, en past de reeks daarop aan.
 
 Een taak houdt zijn tijdvak, zijn [vervaldatum en zijn geschatte duur](../planning.md#schedule-constraints-and-planning). Op de server worden ze zo opgeslagen:

@@ -50,6 +50,9 @@ Google 日历和 iCloud 也支持 CalDAV，但不接受你的普通密码：Goog
 - [子任务](../subtasks.md)和[依赖关系](../dependencies.md)。
 - [附件](../attachments.md)。同一日历上的其他应用能看到这些文件，Mitra 也会显示它们添加的文件。
 
+> [!NOTE]
+> 其他日历应用在单个条目上只读取颜色名称，因此会把条目的颜色显示为最接近的名称，例如 Mitra 的蓝色显示为 `steelblue`。Mitra 会保留精确的颜色，其他 Mitra 实例也能读回它，但经过 Google 时除外，因为 Google 会丢弃它。
+
 重复条目在服务器上仍是一个整体。当你修改其中一次时，Mitra 会问你指的是**此条目**、**此条目及后续条目**还是**所有条目**，并相应地修改重复条目。
 
 任务会保留它的时间安排、[截止日期和预估时长](../planning.md#schedule-constraints-and-planning)。它们在服务器上这样保存：

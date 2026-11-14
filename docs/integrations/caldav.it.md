@@ -50,6 +50,9 @@ Tutto ciò che Mitra salva di una voce si sincronizza, nella misura in cui il tu
 - [Attività secondarie](../subtasks.md) e [dipendenze](../dependencies.md).
 - [Allegati](../attachments.md). Le altre app sullo stesso calendario vedono i file, e Mitra mostra quelli che hanno aggiunto loro.
 
+> [!NOTE]
+> Le altre app di calendario leggono solo nomi di colore sulle singole voci, quindi mostrano il colore di una voce come il nome più vicino, per esempio il blu di Mitra come `steelblue`. Mitra conserva il colore esatto, e anche le altre installazioni di Mitra lo rileggono, tranne tramite Google, che lo scarta.
+
 Una voce ricorrente resta una sola serie sul server. Quando modifichi una singola occorrenza, Mitra ti chiede se intendi **Questa voce**, **Questa e le voci seguenti** o **Tutte le voci**, e modifica la serie di conseguenza.
 
 Un'attività mantiene la sua pianificazione, la sua [scadenza e la sua stima](../planning.md#schedule-constraints-and-planning). Sul server vengono salvate così:

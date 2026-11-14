@@ -50,6 +50,9 @@ Synchronizuje się wszystko, co Mitra przechowuje o wpisie, o ile twój serwer t
 - [Podzadania](../subtasks.md) i [zależności](../dependencies.md).
 - [Załączniki](../attachments.md). Inne aplikacje korzystające z tego samego kalendarza widzą te pliki, a Mitra pokazuje pliki, które one dodały.
 
+> [!NOTE]
+> Inne aplikacje kalendarza odczytują przy pojedynczych wpisach tylko nazwy kolorów, więc pokazują kolor wpisu jako najbliższą nazwę, na przykład niebieski Mitry jako `steelblue`. Mitra zachowuje dokładny kolor, a inne instalacje Mitry również go odczytują, z wyjątkiem Google, które go odrzuca.
+
 Wpis cykliczny pozostaje na serwerze jedną serią. Gdy zmieniasz pojedyncze wystąpienie, Mitra pyta, czy chodzi ci o **Ten wpis**, **Ten i następne wpisy** czy **Wszystkie wpisy**, i odpowiednio zmienia serię.
 
 Zadanie zachowuje swój zaplanowany czas, [termin i szacowany czas](../planning.md#schedule-constraints-and-planning). Na serwerze zapisują się tak:
