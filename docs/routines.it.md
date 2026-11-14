@@ -35,14 +35,14 @@ La frequenza di una routine decide come la mostrano le viste:
 
 ## La scheda Routine
 
-Apri **Routine** nella barra laterale, accanto a Calendari e Pianificazione, oppure scrivine il nome nella tavolozza dei comandi. **Oggi** mostra le routine di oggi, nell’ordine del loro orario, e **Più tardi** le altre, secondo la prossima data. Ogni riga mostra il nome della routine, quando si presenta e una striscia delle sue ultime 14 occorrenze, con quante ne hai rispettate.
+Apri **Routine** nella barra laterale, accanto a Calendari e Pianificazione, oppure scrivine il nome nella tavolozza dei comandi. **Oggi** mostra le routine di oggi, nell’ordine del loro orario, e **Più tardi** le altre, secondo la prossima data. Ogni riga mostra il nome della routine, quando si presenta e la sua serie: una fiamma del colore del suo calendario con quante occorrenze di fila hai rispettato. Una saltata o annullata interrompe la serie, e la fiamma diventa grigia.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
-  <img src="../assets/screenshots/routines-detail-light.webp" alt="La scheda Routine nella barra laterale, ogni routine con le sue ultime occorrenze e quante sono state rispettate" />
+  <img src="../assets/screenshots/routines-detail-light.webp" alt="La scheda Routine nella barra laterale, ogni routine con la sua serie, con il dettaglio della palestra aperto accanto" />
 </picture>
 
-Ogni casella della striscia è un’occorrenza:
+Il dettaglio di una routine mostra le sue ultime settimane come griglia, una casella per giorno:
 
 - Una casella piena è stata rispettata: un evento che si è svolto, o un’attività che hai spuntato.
 - Una casella vuota è stata saltata: un’attività rimasta aperta dopo il suo giorno.
@@ -56,11 +56,13 @@ Lo stato di oggi sta alla fine della riga di una routine: la casella di un’att
 
 ## Il dettaglio di una routine
 
-Fai clic su una riga per vedere di più: da quando esiste la routine, le sue ultime settimane come griglia di giorni, quante delle ultime e dell’ultimo anno hai rispettato, e il giorno della settimana in cui cede più spesso. Il suo menu **⋯** offre **Fatto oggi** per un’attività, **Annullato** per annullare l’occorrenza di oggi e **Mostra nel calendario** per aprire la successiva.
+Fai clic su una riga per vedere di più: da quando esiste la routine, le sue ultime settimane come griglia di giorni e, sotto, tre riquadri: la sua serie, intitolata a come procede, ad esempio **In carreggiata** o **In calo**, con il tuo record; quanto dell’ultimo anno hai rispettato; e il giorno della settimana in cui cede più spesso. Il suo menu **⋯** offre **Fatto oggi** per un’attività, **Annullato** per annullare l’occorrenza di oggi e **Mostra nel calendario** per aprire la successiva. Togli lì la spunta da **Segui come va** per una routine che rispetti senza coltivarla, come una bolletta o una riunione: non mostra più una serie, e il suo dettaglio solo la griglia.
 
 ## Correggere una routine
 
-Mitra trova le routine da solo, e il menu **⋯** del dettaglio lo corregge dove ha sbagliato. **Rinomina…** dà alla routine un nome tuo; puoi anche fare clic sul suo nome e scrivere. Il pulsante accanto a un nome tuo, o riscrivere il titolo delle sue voci, le ridà il nome delle sue voci. **Unisci a** apre le altre routine dello stesso calendario; sceglierne una unisce le due, per un’abitudine con due titoli, come «Pillole del mattino» e «Pillole della sera». **Non è una routine** la toglie dalla scheda per sempre: le voci con il suo titolo non vengono più raccolte in una routine e restano nel tuo calendario.
+Mitra trova le routine da solo, e il menu **⋯** del dettaglio lo corregge dove ha sbagliato. **Rinomina…** dà alla routine un nome tuo; puoi anche fare clic sul suo nome e scrivere. Il pulsante accanto a un nome tuo, o riscrivere il titolo delle sue voci, le ridà il nome delle sue voci. **Unisci a** apre le altre routine dello stesso calendario; sceglierne una unisce le due, per un’abitudine con due titoli, come «Pillole del mattino» e «Pillole della sera». **Non è una routine** la toglie dalla scheda per sempre: le voci con il suo titolo non vengono più raccolte in una routine e restano nel tuo calendario. Ciò che hai detto non essere una routine resta in fondo alla scheda, chiuso sotto **Non sono routine**; aprilo per renderlo di nuovo una routine.
+
+L’editor di una voce ha una riga **Routine** dopo le sue date, mostrata quando la voce appartiene a una routine o potrebbe appartenervi. Scegli lì un’altra routine del suo calendario, **Nuova routine** per iniziarne una dalla voce, a cui si uniscono le voci successive con il suo titolo, oppure **Non è una routine** per toglierla per sempre, come un pranzo che con un’abitudine condivide solo il titolo. La riga mostra la serie della routine accanto al suo nome.
 
 ## Usare una routine
 

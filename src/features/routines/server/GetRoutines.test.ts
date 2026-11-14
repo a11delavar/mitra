@@ -8,6 +8,7 @@ import { viewIn, zones } from '#features/entries/server/viewers.testing.js'
 import { CreateEntry } from '#features/entries/server/CreateEntry.js'
 import { SettleHomeTimeZone } from '#features/time/server/SettleHomeTimeZone.js'
 import { OperationServer } from '#infrastructure/operations/OperationServer.testing.js'
+import { TrackRoutine } from './TrackRoutine.js'
 
 /** A routine as the tool answers it. */
 interface Routine {
@@ -15,8 +16,9 @@ interface Routine {
 	readonly titles: ReadonlyArray<string>
 	readonly rule?: string
 	readonly since?: string
-	readonly kept: number
-	readonly of: number
+	readonly tracked: boolean
+	readonly kept?: number
+	readonly of?: number
 	readonly slips?: { readonly weekday: number, readonly count: number, readonly of: number }
 	readonly occurrences: ReadonlyArray<{ readonly id: string, readonly occurrence?: string, readonly type: string, readonly status: string }>
 	readonly next?: { readonly start?: string }
@@ -54,6 +56,14 @@ describe('GetRoutines', () => {
 		assert.ok(missed.every(date => Temporal.Instant.from(date.occurrence!).toZonedDateTimeISO('Europe/Berlin').dayOfWeek === 7))
 		assert.deepEqual([routine.kept, routine.of, routine.rule], [0, 4, 'FREQ=WEEKLY'])
 		assert.deepEqual(routine.slips, { weekday: 7, count: 4, of: 4 })
+	})
+
+	it('tells no kept counts for a routine its person keeps to as a schedule, only its dates', async () => {
+		await weekly('Pay the bills', EntryType.Task)
+		await TrackRoutine.call({ id: (await routineOf('Pay the bills')).id, tracked: false })
+		const routine = await routineOf('Pay the bills')
+		assert.deepEqual([routine.tracked, routine.kept, routine.of, routine.slips], [false, undefined, undefined, undefined])
+		assert.equal(routine.occurrences.filter(occurrence => occurrence.status === 'missed').length, 4)
 	})
 
 	it('reads an override another app renamed and ticked off as one of its recurring entry\'s dates', async () => {

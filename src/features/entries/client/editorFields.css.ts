@@ -2,16 +2,17 @@ import { css, unsafeCSS } from '@a11d/lit'
 import { ring, activated, controlHeight } from '#design'
 
 /**
- * The entry editor's rows (`.field`): borderless until hovered, lit while one of their controls is in use, the focus
- * ring on the row. The design library's fields inside drop their own box through `--mitra-field-*`, and a row's
- * pickers hang from the whole row. Scoped by a weightless `:where()`, so every rule weighs what it did unscoped.
+ * The entry editor's rows (`.field`), and the routine detail's name: borderless until hovered, lit while one of their
+ * controls is in use, the focus ring on the row. The design library's fields inside drop their own box through
+ * `--mitra-field-*`, and a row's pickers hang from the whole row. Scoped by a weightless `:where()`, so every rule weighs
+ * what it did unscoped.
  */
 // The shadow-rooted fields whose chrome a row wears, inside it or the row itself; their keyboard focus is the row's,
 // read through `:state()`.
 const focusedField = unsafeCSS(':is(mitra-select, mitra-date-field, mitra-time-field, mitra-date-time-field, mitra-duration-field, mitra-text-field, mitra-search-field, mitra-number-field):state(focus-visible)')
 
 export const editorFieldStyles = css`
-	:where(mitra-entry-details) {
+	:where(mitra-entry-details, mitra-routine-details) {
 		.field {
 			box-sizing: border-box;
 			appearance: none;

@@ -153,7 +153,7 @@ export class Sidebar extends Component {
 				/* Only the three lengths that two distant rules must agree on live here. The source list's
 				   columns are laid out by ONE grid the rows subscribe to (see .integrations), not by an
 				   arithmetic of per-element paddings. */
-				--sidebar-width: 22rem;
+				--sidebar-width: 16rem;
 				--sidebar-inset: 0.5rem;
 				/* Source list column gap and row content inset, aligning headings across tabs. */
 				--sidebar-gap: 0.5rem;
@@ -419,6 +419,18 @@ export class Sidebar extends Component {
 					min-height: 0;
 				}
 
+				/* Every panel reaches the sidebar's edge and is padded back by its inset, so a list's thumb can ride that
+				   edge inside its own panel. A list reaching past its panel instead widens the last one, and with it the
+				   strip the tabs' position is read from. */
+				mitra-tabs::part(panels) {
+					margin-inline-end: calc(-1 * var(--sidebar-inset));
+				}
+
+				mitra-tab-panel {
+					box-sizing: border-box;
+					padding-inline-end: var(--sidebar-inset);
+				}
+
 				mitra-tab-panel > .integrations,
 				mitra-tab-panel > mitra-planning,
 				mitra-tab-panel > mitra-routines {
@@ -427,17 +439,17 @@ export class Sidebar extends Component {
 				}
 
 				/* Planning's and the routines' headings, counts and cards share one edge on each side, the account
-				   headings' gap in from the panel. The thumb's lane is reserved whether or not it shows, so the cards
-				   never move by its width, and it lies inside that gap: reaching past the panel instead, as the source
-				   list does, would widen the last panel and throw the tabs' position off. */
+				   headings' gap in from the content. Their lists scroll as the source list does: the thumb rides the
+				   sidebar's edge in a lane reserved whether or not it shows, so the cards never move by its width. */
 				mitra-tab-panel > mitra-planning > section > header {
 					padding-inline: var(--sidebar-gap);
 				}
 
 				mitra-tab-panel > mitra-planning > section > .entries,
 				mitra-tab-panel > mitra-routines {
+					margin-inline-end: calc(-1 * var(--sidebar-inset));
 					${scrollbar};
-					padding-inline: var(--sidebar-gap) calc(var(--sidebar-gap) - var(--scrollbar-width));
+					padding-inline: var(--sidebar-gap) calc(var(--sidebar-inset) - var(--scrollbar-width) + var(--sidebar-gap));
 					scrollbar-gutter: stable;
 				}
 
@@ -964,14 +976,14 @@ export class Sidebar extends Component {
 						${this.updateHint || !DialogAbout.hasNews ? html.nothing : html`<span class="news-dot" title=${t('What\'s New')}></span>`}
 					</span>
 				</button>
-				<mitra-tabs .selected=${this.tab} @selectedChange=${(e: CustomEvent<string>) => this.setTab(e.detail as SidebarTab)}>
+				<mitra-tabs compact .selected=${this.tab} @selectedChange=${(e: CustomEvent<string>) => this.setTab(e.detail as SidebarTab)}>
 					<mitra-tab name="calendars" icon="calendar-days">${t('Calendars')}</mitra-tab>
 					<mitra-tab-panel name="calendars">${this.calendarsTemplate}</mitra-tab-panel>
 
-					<mitra-tab name="planning" icon="list-todo" .badge=${this.planningCount}>${t('Planning')}</mitra-tab>
+					<mitra-tab name="planning" icon="goal" .badge=${this.planningCount}>${t('Planning')}</mitra-tab>
 					<mitra-tab-panel name="planning">${this.planningTemplate}</mitra-tab-panel>
 
-					<mitra-tab name="routines" icon="repeat" .badge=${RoutineStore.dueToday}>${t('Routines')}</mitra-tab>
+					<mitra-tab name="routines" icon="activity" .badge=${RoutineStore.dueToday}>${t('Routines')}</mitra-tab>
 					<mitra-tab-panel name="routines">
 						<mitra-routines></mitra-routines>
 					</mitra-tab-panel>

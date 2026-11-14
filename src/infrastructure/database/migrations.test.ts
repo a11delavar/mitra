@@ -311,7 +311,7 @@ describe('migrate', () => {
 			const connection = orm.em.getConnection()
 			await orm.migrator.up()
 			const columnsOf = async (table: string) => (await connection.execute(`select name from pragma_table_info('${table}')`) as Array<{ name: string }>).map(column => column.name)
-			assert.deepEqual(await columnsOf('routine'), ['id', 'source_id', 'name', 'dissolved'])
+			assert.deepEqual(await columnsOf('routine'), ['id', 'source_id', 'name', 'dissolved', 'untracked'])
 			assert.ok((await columnsOf('entry')).includes('routine_id') && (await columnsOf('entry')).includes('routine_declined'))
 			assert.deepEqual(await connection.execute('select `key` from `state` where `key` like \'backfill:%\''), [{ key: 'backfill:recognize-stored-entries' }])
 

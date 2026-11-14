@@ -1,10 +1,17 @@
 ---
-title: Routinen-Tracker, Todoist, Terminstatus und Fälligkeiten auf einen Blick
+title: Routinen & Serien, Todoist, Terminstatus und Fälligkeiten auf einen Blick
 ---
 Mitra 0.8 hilft dir, bei den Dingen dranzubleiben, die du immer wieder tust, und hält fest, was nicht stattgefunden hat.
 
-## Routinen-Tracker
-Mitra fasst schon jetzt zu Routinen zusammen, was du oft tust, etwa das Fitnessstudio oder einen Haarschnitt alle fünf Wochen. Jetzt bekommen sie einen eigenen Platz, an dem du die letzten Tage jeder Routine auf einen Blick siehst: wie viele du eingehalten hast und welche abgesagt oder verpasst wurden. Du kannst eine Routine umbenennen, zwei zusammengehörige zusammenführen oder Mitra sagen, dass etwas gar keine Routine ist. Routinen bleiben außerdem in der Monats- und Jahresansicht stabil, egal wie weit du scrollst, und dein KI-Konnektor kann dir sagen, wie es um sie steht.
+## Routinen & Serien
+Mitra fasst schon jetzt zu Routinen zusammen, was du oft tust, etwa das Fitnessstudio oder einen Haarschnitt alle fünf Wochen. Jetzt bekommen sie einen eigenen Platz, an dem eine Flamme die Serie jeder Routine auf einen Blick zeigt und ihre Details die Tage, die du eingehalten, abgesagt oder verpasst hast. Du kannst eine Routine umbenennen, zwei zusammengehörige zusammenführen oder Mitra sagen, dass etwas gar keine Routine ist. Routinen bleiben außerdem in der Monats- und Jahresansicht stabil, egal wie weit du scrollst, und dein KI-Konnektor kann dir sagen, wie es um sie steht.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
+	<img src="routines-light.webp" alt="Der Tab Routinen neben der Monatsansicht, jede Routine mit ihrer Serie, daneben die Details des Fitnessstudios">
+</picture>
+
+Doku: [Routinen](../../docs/routines.md)
 
 ## Überall dieselbe Uhrzeit
 Manches hängt nicht von deiner Zeitzone ab: Ein Medikament um 7:30 Uhr ist um 7:30 Uhr dran, zu Hause wie auf Reisen. Wähle oben in den Zeitzonen eines Eintrags **Überall dieselbe Uhrzeit**, und er bleibt bei dieser Uhrzeit, wo du auch bist, markiert mit einem durchgestrichenen Globus. Einträge, die ohne Zeitzone aus anderen Apps kommen, zeigen es ebenfalls. Bevor du einen davon in einen Kalender verschiebst, der solche Zeiten nicht kennt, etwa Google Calendar, sagt dir Mitra, dass er eine feste Zeitzone bekommt.

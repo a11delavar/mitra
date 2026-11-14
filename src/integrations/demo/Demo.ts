@@ -185,6 +185,12 @@ export class Demo extends MitraCalendar {
 		const uniTask = (init: Partial<Entry>) => on(university)({ type: EntryType.Task, ...init })
 
 		const relate = (entry: Entry, type: RelationType, target: Entry) => entry.relateTo(type, target.uid!)
+		// A routine kept to rather than kept up, as a bill or a meeting is: its person said so, and it shows no streak.
+		const schedule = (source: Source) => {
+			const routine = new Routine({ sourceId: source.id, untracked: true })
+			em.persist(routine)
+			return routine.id
+		}
 
 		const past = (weeks: number, dayOffset: number, hour: number, minute = 0) => at(thisWeekMonday.subtract({ days: weeks * 7 }), dayOffset, hour, minute)
 
@@ -272,13 +278,15 @@ export class Demo extends MitraCalendar {
 
 		// Four one-off entries, about five weeks apart but never exactly, as a salon hands out its slots, make a routine
 		// without a rule; the fifth is coming up.
+		const haircuts = schedule(personal)
 		for (const [days, hour, minute] of [[-137, 17, 0], [-101, 17, 30], [-63, 18, 0], [-29, 16, 30], [4, 17, 0]] as const) {
 			const start = at(nextWeekMonday, days, hour, minute)
-			personalEvent({ heading: t('💇 Haircut'), start, end: start.add({ minutes: 45 }) })
+			personalEvent({ heading: t('💇 Haircut'), routineId: haircuts, start, end: start.add({ minutes: 45 }) })
 		}
 
 		personalEvent({
 			heading: t('Therapy'),
+			routineId: schedule(personal),
 			start: at(pastStart, 2, 18),
 			end: at(pastStart, 2, 19),
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, interval: 2, byday: [RecurrenceWeekday.Wednesday] }),
@@ -289,6 +297,7 @@ export class Demo extends MitraCalendar {
 		// Rarely called off, and skipped between the years.
 		history(workEvent({
 			heading: t('Weekly Team Sync'),
+			routineId: schedule(work),
 			start: at(pastStart, 1, 15),
 			end: at(pastStart, 1, 16),
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Weekly, byday: [RecurrenceWeekday.Tuesday] }),
@@ -302,6 +311,7 @@ export class Demo extends MitraCalendar {
 		// A weekday rule rather than a date, so it always lands on a work day; forgotten now and then.
 		history(workTask({
 			heading: t('Submit Expense Report'),
+			routineId: schedule(work),
 			start: at(pastStart, 0, 16),
 			end: at(pastStart, 0, 16, 30),
 			status: EntryStatus.ToDo,
@@ -381,6 +391,7 @@ export class Demo extends MitraCalendar {
 		// Since some months, the odd Saturday missed, or called off when away.
 		history(upkeepTask({
 			heading: t('🛒 Grocery Shopping'),
+			routineId: schedule(upkeep),
 			start: past(34, 5, 10),
 			end: past(34, 5, 11),
 			status: EntryStatus.ToDo,
@@ -400,6 +411,7 @@ export class Demo extends MitraCalendar {
 		// every time but the odd once.
 		history(upkeepTask({
 			heading: t('Pay the rent'),
+			routineId: schedule(upkeep),
 			status: EntryStatus.ToDo,
 			allDay: true,
 			due: allDayStart(todayStart.subtract({ years: 2 }).with({ day: 1 }), 0),
@@ -412,6 +424,7 @@ export class Demo extends MitraCalendar {
 		const pastMonth3Start = mondayOf(todayStart.add({ months: 3 })).subtract({ years: 5 })
 		upkeepEvent({
 			heading: t('Car Inspection'),
+			routineId: schedule(upkeep),
 			start: at(pastMonth3Start, 1, 9),
 			end: at(pastMonth3Start, 1, 10),
 			recurrence: new Recurrence({ freq: RecurrenceFrequency.Yearly }),

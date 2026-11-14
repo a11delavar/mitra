@@ -4,6 +4,7 @@ import { centered, type Popover, startedInField, scrollbar } from '#design'
 import { type Source, Color } from '#features/sources'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { hierarchy } from '#features/relations/client/Hierarchy.js'
+import { RoutineField } from '#features/routines/client/RoutineField.js'
 import { type EntryTypeValue } from '../EntryType.js'
 import type { EntrySegment } from './EntrySegment.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
@@ -546,7 +547,7 @@ export class EntryDetailsComponent extends Component {
 		const entry = this.segment!.entry
 		const groups = [
 			// Rendered for an UNDATED entry too, where it shows just the way in (see EntryDetailsWhen).
-			[html`<mitra-entry-details-when .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>`],
+			[html`<mitra-entry-details-when .entry=${entry} @change=${this.handleInPlaceEdit}></mitra-entry-details-when>`, this.routineTemplate],
 			[this.locationTemplate, this.participantsTemplate, this.hyperlinksTemplate, this.attachmentsTemplate, this.descriptionTemplate],
 			[
 				!EntryDetailsSharing.applies(entry) ? html.nothing : html`
@@ -611,6 +612,17 @@ export class EntryDetailsComponent extends Component {
 						`)}
 				</mitra-select>
 			</span>
+		`
+	}
+
+	/** After the dates and their Repeat row: the routine it belongs to, or could. */
+	private get routineTemplate() {
+		const entry = this.segment!.entry
+		return !RoutineField.showsFor(entry) || !entry.editable ? html.nothing : html`
+			<li class="routine field">
+				<mitra-icon icon="activity"></mitra-icon>
+				<mitra-routine-field .entry=${entry}></mitra-routine-field>
+			</li>
 		`
 	}
 

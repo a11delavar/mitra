@@ -35,14 +35,14 @@ To, jak często rutyna występuje, decyduje o tym, jak pokazują ją widoki:
 
 ## Karta Rutyny
 
-Otwórz **Rutyny** na pasku bocznym, obok Kalendarzy i Planowania, albo wpisz jej nazwę w palecie poleceń. **Dzisiaj** pokazuje rutyny przypadające na dziś, według godziny, a **Później** pozostałe, według najbliższego terminu. Każdy wiersz pokazuje nazwę rutyny, kiedy występuje, oraz pasek jej ostatnich 14 wystąpień z liczbą tych, które wykonałeś.
+Otwórz **Rutyny** na pasku bocznym, obok Kalendarzy i Planowania, albo wpisz jej nazwę w palecie poleceń. **Dzisiaj** pokazuje rutyny przypadające na dziś, według godziny, a **Później** pozostałe, według najbliższego terminu. Każdy wiersz pokazuje nazwę rutyny, kiedy występuje, oraz jej serię: płomień w kolorze jej kalendarza z liczbą wystąpień wykonanych z rzędu. Pominięte lub anulowane wystąpienie kończy serię, a płomień robi się szary.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
-  <img src="../assets/screenshots/routines-detail-light.webp" alt="Karta Rutyny na pasku bocznym, każda rutyna z ostatnimi wystąpieniami i liczbą wykonanych" />
+  <img src="../assets/screenshots/routines-detail-light.webp" alt="Karta Rutyny na pasku bocznym, każda rutyna ze swoją serią, obok otwarte szczegóły siłowni" />
 </picture>
 
-Każde pole paska to jedno wystąpienie:
+Szczegóły rutyny pokazują jej ostatnie tygodnie jako siatkę, jedno pole na dzień:
 
 - Pełne pole jest wykonane: wydarzenie, które się odbyło, albo zadanie, które odhaczyłeś.
 - Puste pole jest pominięte: zadanie, które po swoim dniu zostało otwarte.
@@ -56,11 +56,13 @@ Dzisiejszy status jest na końcu wiersza rutyny: pole wyboru zadania, które odh
 
 ## Szczegóły rutyny
 
-Kliknij wiersz, aby zobaczyć więcej: od kiedy trwa rutyna, jej ostatnie tygodnie jako siatkę dni, ile z ostatnich i z ostatniego roku wykonałeś oraz w który dzień tygodnia najczęściej odpada. Jej menu **⋯** ma **Zrobione dziś** dla zadania, **Anulowane**, aby anulować dzisiejsze wystąpienie, i **Pokaż w kalendarzu**, aby otworzyć następne.
+Kliknij wiersz, aby zobaczyć więcej: od kiedy trwa rutyna, jej ostatnie tygodnie jako siatkę dni, a pod nią trzy kafelki: jej serię z nagłówkiem mówiącym, jak idzie, na przykład **Na dobrej drodze** albo **Słabnie**, i twoim rekordem; ile z ostatniego roku wykonałeś; oraz w który dzień tygodnia najczęściej odpada. Jej menu **⋯** ma **Zrobione dziś** dla zadania, **Anulowane**, aby anulować dzisiejsze wystąpienie, i **Pokaż w kalendarzu**, aby otworzyć następne. Odznacz tam **Śledź, jak idzie** przy rutynie, której tylko dotrzymujesz, jak rachunek czy spotkanie: nie pokazuje wtedy serii, a jej szczegóły tylko siatkę.
 
 ## Poprawianie rutyny
 
-Mitra sama znajduje rutyny, a menu **⋯** w szczegółach poprawia ją tam, gdzie się pomyliła. **Zmień nazwę…** nadaje rutynie własną nazwę; możesz też kliknąć jej nazwę i pisać. Przycisk obok własnej nazwy albo ponowne wpisanie tytułu jej wpisów przywraca nazwę według wpisów. **Scal z** otwiera pozostałe rutyny tego samego kalendarza; wybranie jednej łączy obie, gdy jeden nawyk ma dwa tytuły, na przykład „Tabletki rano” i „Tabletki wieczorem”. **To nie rutyna** usuwa ją z karty na dobre: wpisy o jej tytule nie są już łączone w rutynę i zostają w twoim kalendarzu.
+Mitra sama znajduje rutyny, a menu **⋯** w szczegółach poprawia ją tam, gdzie się pomyliła. **Zmień nazwę…** nadaje rutynie własną nazwę; możesz też kliknąć jej nazwę i pisać. Przycisk obok własnej nazwy albo ponowne wpisanie tytułu jej wpisów przywraca nazwę według wpisów. **Scal z** otwiera pozostałe rutyny tego samego kalendarza; wybranie jednej łączy obie, gdy jeden nawyk ma dwa tytuły, na przykład „Tabletki rano” i „Tabletki wieczorem”. **To nie rutyna** usuwa ją z karty na dobre: wpisy o jej tytule nie są już łączone w rutynę i zostają w twoim kalendarzu. To, co oznaczyłeś jako nie rutynę, czeka zwinięte na końcu karty w **To nie rutyny**; rozwiń je, aby znowu zrobić z tego rutynę.
+
+Edytor wpisu ma po datach wiersz **Rutyna**, widoczny, gdy wpis należy do rutyny albo mógłby do niej należeć. Wybierz tam inną rutynę z jego kalendarza, **Nowa rutyna**, aby zacząć ją od tego wpisu, do której dołączą późniejsze wpisy o jego tytule, albo **To nie rutyna**, aby wyjąć go z niej na dobre, na przykład lunch, który tylko dzieli tytuł z nawykiem. Wiersz pokazuje serię rutyny obok jej nazwy.
 
 ## Korzystanie z rutyny
 

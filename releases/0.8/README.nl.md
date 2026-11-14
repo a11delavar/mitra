@@ -1,10 +1,17 @@
 ---
-title: Routinetracker, Todoist, afspraakstatus en vervaldatums in één oogopslag
+title: Routines & reeksen, Todoist, afspraakstatus en vervaldatums in één oogopslag
 ---
 Mitra 0.8 helpt je vol te houden wat je steeds weer doet, en houdt bij wat niet is doorgegaan.
 
-## Routinetracker
-Mitra bundelt de dingen die je vaak doet al tot routines, zoals de sportschool of elke vijf weken naar de kapper. Nu krijgen ze een eigen plek, waar je van elke routine de laatste keren in één oogopslag ziet: hoe vaak het je is gelukt, en welke keren je hebt geannuleerd of gemist. Je kunt een routine een andere naam geven, twee routines die bij elkaar horen samenvoegen, of Mitra laten weten dat iets helemaal geen routine is. Routines blijven in de maand- en jaarweergave ook rustig staan, hoe ver je ook scrolt, en je AI-connector kan je vertellen hoe het ermee gaat.
+## Routines & reeksen
+Mitra bundelt de dingen die je vaak doet al tot routines, zoals de sportschool of elke vijf weken naar de kapper. Nu krijgen ze een eigen plek, waar een vlam in één oogopslag de reeks van elke routine toont, en haar detail de keren die je hebt gedaan, geannuleerd of gemist. Je kunt een routine een andere naam geven, twee routines die bij elkaar horen samenvoegen, of Mitra laten weten dat iets helemaal geen routine is. Routines blijven in de maand- en jaarweergave ook rustig staan, hoe ver je ook scrolt, en je AI-connector kan je vertellen hoe het ermee gaat.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
+	<img src="routines-light.webp" alt="Het tabblad Routines naast de maandweergave, elke routine met haar reeks, met het detail van de sportschool ernaast geopend">
+</picture>
+
+Documentatie: [Routines](../../docs/routines.md)
 
 ## Overal dezelfde tijd
 Sommige dingen hangen niet af van je tijdzone: medicijnen om 7:30 neem je om 7:30, thuis of op reis. Kies **Overal dezelfde tijd** bovenaan de tijdzones van een item, en het blijft op dat uur staan waar je ook bent, gemarkeerd met een doorgestreepte wereldbol. Items die zonder tijdzone uit andere apps komen, tonen het ook. Verplaats je er een naar een agenda die zulke tijden niet kent, zoals Google Agenda, dan laat Mitra je eerst weten dat het een vaste tijdzone krijgt.

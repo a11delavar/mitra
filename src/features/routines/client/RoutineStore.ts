@@ -1,7 +1,7 @@
 import { Controller } from '@a11d/lit'
 import { type ReactiveControllerHost } from 'lit'
 import { DateTime } from '@3mo/date-time'
-import { CompleteTask, ListRoutineEntries, ListRoutines } from '#operations'
+import { CompleteTask, ListDissolvedRoutines, ListRoutineEntries, ListRoutines, RestoreRoutine } from '#operations'
 import { EntryStatus, type Entry } from '#features/entries'
 import { EntryOccurrenceChangeScope, type EntryOccurrence } from '#features/recurrence'
 import { TimeZone } from '#features/time/TimeZone.js'
@@ -22,9 +22,6 @@ export type RoutineSection = 'today' | 'later'
  * it, else where it is.
  */
 export class RoutineStore extends Controller {
-	/** How many of their last dates the tab shows, and counts kept among. */
-	static readonly strip = 14
-
 	private static readonly hosts = new Set<ReactiveControllerHost>()
 
 	static routines: ReadonlyMap<string, Routine> = new Map()
@@ -34,6 +31,9 @@ export class RoutineStore extends Controller {
 
 	/** Each routine's dates as last read, by its id, while the tab reads them. */
 	private static dates?: ReadonlyMap<string, RoutineEntryOccurrences>
+
+	/** What the person said is no routine, while the tab reads them, to make a routine again. */
+	private static dissolved: ReadonlyArray<Routine> = []
 
 	private static _showing = false
 	/** Whether the tab is read: the routines' entries are then fetched beside them. */
@@ -45,6 +45,7 @@ export class RoutineStore extends Controller {
 				void RoutineStore.refresh()
 			} else {
 				RoutineStore.entries = RoutineStore.dates = undefined
+				RoutineStore.dissolved = []
 			}
 		}
 	}
@@ -83,7 +84,8 @@ export class RoutineStore extends Controller {
 			try {
 				do {
 					RoutineStore.again = false
-					const [routines, entries] = await Promise.all([ListRoutines.call(), ListRoutineEntries.call(RoutineStore.query)])
+					const [routines, entries, dissolved] = await Promise.all([ListRoutines.call(), ListRoutineEntries.call(RoutineStore.query), ListDissolvedRoutines.call()])
+					RoutineStore.dissolved = RoutineStore.showing ? dissolved : []
 					RoutineStore.adopt(routines, RoutineStore.showing ? entries : undefined)
 				} while (RoutineStore.again)
 			} catch (error) {
@@ -126,6 +128,18 @@ export class RoutineStore extends Controller {
 	static get visible() {
 		const visible = new Set(Calendars.visible.map(source => source.id))
 		return [...RoutineStore.routines.values()].filter(routine => RoutineStore.datesOf(routine) && visible.has(routine.sourceId))
+	}
+
+	/** What the person said is no routine, of the visible calendars, by name. */
+	static get visibleDissolved() {
+		const visible = new Set(Calendars.visible.map(source => source.id))
+		return RoutineStore.dissolved.filter(routine => visible.has(routine.sourceId)).toSorted((a, b) => a.label.localeCompare(b.label))
+	}
+
+	/** Makes what the person said is no routine a routine again. */
+	static async restore(routine: Routine) {
+		await RestoreRoutine.call({ id: routine.id }).catch(reportSaveError)
+		await RoutineStore.refresh()
 	}
 
 	/** The badge: routine tasks whose date today is still open, read off the calendar's own, as it holds today. */

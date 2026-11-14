@@ -11,7 +11,7 @@ export async function routineOf(server: OperationServer, entryId: string) {
 
 /** A routine as stored. */
 export async function routine(server: OperationServer, id: string | undefined) {
-	return (await server.query<{ source_id: string, name: string | null, dissolved: number | null }>('select source_id, name, dissolved from routine where id = ?', [id]))[0]
+	return (await server.query<{ source_id: string, name: string | null, dissolved: number | null, untracked: number | null }>('select source_id, name, dissolved, untracked from routine where id = ?', [id]))[0]
 }
 
 /** A daily recurring event in `sourceId`, which founds a routine: its id and its routine's. */

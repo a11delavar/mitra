@@ -1,10 +1,17 @@
 ---
-title: Śledzenie rutyn, Todoist, status wydarzeń i terminy na pierwszy rzut oka
+title: Rutyny i serie, Todoist, status wydarzeń i terminy na pierwszy rzut oka
 ---
 Mitra 0.8 pomaga ci wytrwać w tym, co robisz regularnie, i zapisuje, co się nie odbyło.
 
-## Śledzenie rutyn
-Mitra już wcześniej zbierała w rutyny to, co robisz często, na przykład siłownię albo strzyżenie co pięć tygodni. Teraz rutyny mają własne miejsce, w którym na pierwszy rzut oka widzisz ostatnie dni każdej z nich: ile razy się udało, a które wystąpienia zostały anulowane lub pominięte. Możesz zmienić nazwę rutyny, połączyć dwie, które do siebie należą, albo zaznaczyć, że coś wcale nie jest rutyną. W widokach miesiąca i roku rutyny wyglądają tak samo bez względu na to, jak daleko przewiniesz, a twój konektor AI potrafi podsumować, jak ci idą.
+## Rutyny i serie
+Mitra już wcześniej zbierała w rutyny to, co robisz często, na przykład siłownię albo strzyżenie co pięć tygodni. Teraz rutyny mają własne miejsce, w którym płomień na pierwszy rzut oka pokazuje serię każdej z nich, a jej szczegóły dni wykonane, anulowane lub pominięte. Możesz zmienić nazwę rutyny, połączyć dwie, które do siebie należą, albo zaznaczyć, że coś wcale nie jest rutyną. W widokach miesiąca i roku rutyny wyglądają tak samo bez względu na to, jak daleko przewiniesz, a twój konektor AI potrafi podsumować, jak ci idą.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
+	<img src="routines-light.webp" alt="Karta Rutyny obok widoku miesiąca, każda rutyna ze swoją serią, obok otwarte szczegóły siłowni">
+</picture>
+
+Dokumentacja: [Rutyny](../../docs/routines.md)
 
 ## Wszędzie ta sama godzina
 Niektóre rzeczy nie zależą od strefy czasowej: lek o 7:30 bierzesz o 7:30, w domu i w podróży. Wybierz **Wszędzie ta sama godzina** na początku listy stref czasowych wpisu, a wpis pozostanie o tej godzinie, gdziekolwiek jesteś. Oznacza go przekreślony globus. To ustawienie mają też wpisy, które trafiają z innych aplikacji bez strefy czasowej. Zanim przeniesiesz taki wpis do kalendarza, który nie obsługuje takich godzin, na przykład do Kalendarza Google, Mitra uprzedzi cię, że otrzyma on stałą strefę czasową.

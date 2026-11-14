@@ -22,6 +22,7 @@ import { Migration20261019123509_IntegrationSyncState } from './Migration2026101
 import { Migration20261025141203_IntegrationName } from './Migration20261025141203_IntegrationName.js'
 import { Migration20261101120000_EntryStatusOfEvents } from './Migration20261101120000_EntryStatusOfEvents.js'
 import { Migration20261112090000_Routines } from './Migration20261112090000_Routines.js'
+import { Migration20261114184035_RoutineUntracked } from './Migration20261114184035_RoutineUntracked.js'
 /** A migration's name as its file spells it, which keys the log: esbuild renames a class that refers to itself (`_Migration…`). */
 export const nameOf = (migration: Constructor<Migration>) => migration.name.replace(/^_/, '')
 
@@ -52,4 +53,5 @@ export const migrations: Array<Constructor<Migration>> = [
 	Migration20261025141203_IntegrationName,
 	Migration20261101120000_EntryStatusOfEvents,
 	Migration20261112090000_Routines,
+	Migration20261114184035_RoutineUntracked,
 ]

@@ -1,10 +1,17 @@
 ---
-title: Acompanhamento de rotinas, Todoist, estado dos eventos e vencimentos de relance
+title: Rotinas e sequências, Todoist, estado dos eventos e vencimentos de relance
 ---
 O Mitra 0.8 ajuda você a manter as coisas que faz de novo e de novo, e guarda o registro do que não aconteceu.
 
-## Acompanhamento de rotinas
-O Mitra já reúne em rotinas o que você faz com frequência, como a academia ou um corte de cabelo a cada cinco semanas. Agora elas ganham um lugar próprio, onde você vê de relance os últimos dias de cada rotina: quantos você cumpriu e quais cancelou ou perdeu. Você pode renomear uma rotina, juntar duas que andam juntas ou dizer ao Mitra que algo não é uma rotina. As rotinas também ficam estáveis nas visualizações de mês e ano, por mais que você role, e o seu conector de IA pode dizer como elas estão indo.
+## Rotinas e sequências
+O Mitra já reúne em rotinas o que você faz com frequência, como a academia ou um corte de cabelo a cada cinco semanas. Agora elas ganham um lugar próprio, onde uma chama mostra de relance a sequência de cada rotina, e o seu detalhe os dias que você cumpriu, cancelou ou perdeu. Você pode renomear uma rotina, juntar duas que andam juntas ou dizer ao Mitra que algo não é uma rotina. As rotinas também ficam estáveis nas visualizações de mês e ano, por mais que você role, e o seu conector de IA pode dizer como elas estão indo.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
+	<img src="routines-light.webp" alt="A aba Rotinas ao lado da visualização de mês, cada rotina com a sua sequência, com o detalhe do ginásio aberto ao lado">
+</picture>
+
+Documentação: [Rotinas](../../docs/routines.md)
 
 ## Mesmo horário em todo lugar
 Algumas coisas não dependem do seu fuso horário: o remédio das 7:30 é às 7:30, em casa ou em viagem. Escolha **Mesmo horário em todo lugar** no topo dos fusos horários de uma entrada, e ela fica nesse horário onde quer que você esteja, marcada com um globo riscado. Entradas que chegam de outros aplicativos sem fuso horário também mostram isso. Antes que você mova uma delas para um calendário que não tem horários assim, como o Google Calendar, o Mitra avisa que ela vai receber um fuso horário fixo.

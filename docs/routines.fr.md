@@ -35,14 +35,14 @@ La fréquence d'une routine décide de la façon dont les vues l'affichent :
 
 ## L’onglet Routines
 
-Ouvrez **Routines** dans la barre latérale, à côté d’Agendas et Planification, ou tapez son nom dans la palette de commandes. **Aujourd’hui** montre les routines du jour, dans l’ordre de leur heure, et **Plus tard** les autres, selon leur prochaine date. Chaque ligne montre le nom de la routine, quand elle revient, et une bande de ses 14 dernières occurrences, avec combien vous en avez tenues.
+Ouvrez **Routines** dans la barre latérale, à côté d’Agendas et Planification, ou tapez son nom dans la palette de commandes. **Aujourd’hui** montre les routines du jour, dans l’ordre de leur heure, et **Plus tard** les autres, selon leur prochaine date. Chaque ligne montre le nom de la routine, quand elle revient, et sa série : une flamme de la couleur de son calendrier avec le nombre d’occurrences tenues d’affilée. Une occurrence manquée ou annulée met fin à la série, et la flamme devient grise.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
-  <img src="../assets/screenshots/routines-detail-light.webp" alt="L’onglet Routines dans la barre latérale, chaque routine avec ses dernières occurrences et combien ont été tenues" />
+  <img src="../assets/screenshots/routines-detail-light.webp" alt="L’onglet Routines dans la barre latérale, chaque routine avec sa série, avec le détail de la salle de sport ouvert à côté" />
 </picture>
 
-Chaque case de la bande est une occurrence :
+Le détail d’une routine montre ses dernières semaines en grille, une case par jour :
 
 - Une case pleine a été tenue : un événement qui a eu lieu, ou une tâche que vous avez cochée.
 - Une case vide a été manquée : une tâche restée ouverte après son jour.
@@ -56,11 +56,13 @@ Le statut du jour se trouve au bout de la ligne d’une routine : la case à coc
 
 ## Le détail d’une routine
 
-Cliquez sur une ligne pour en voir plus : depuis quand la routine existe, ses dernières semaines en grille de jours, combien des dernières et de l’année écoulée vous avez tenues, et le jour de la semaine où elle flanche le plus. Son menu **⋯** propose **Fait aujourd’hui** pour une tâche, **Annulé** pour annuler l’occurrence du jour, et **Afficher dans le calendrier** pour ouvrir la suivante.
+Cliquez sur une ligne pour en voir plus : depuis quand la routine existe, ses dernières semaines en grille de jours, et dessous trois tuiles : sa série, titrée par la façon dont elle se passe, comme **Sur les rails** ou **En perte de vitesse**, avec votre record ; la part de l’année écoulée que vous avez tenue ; et le jour de la semaine où elle flanche le plus. Son menu **⋯** propose **Fait aujourd’hui** pour une tâche, **Annulé** pour annuler l’occurrence du jour, et **Afficher dans le calendrier** pour ouvrir la suivante. Décochez-y **Suivre son évolution** pour une routine que vous respectez sans l’entretenir, comme une facture ou une réunion : elle ne montre alors plus de série, et son détail seulement sa grille.
 
 ## Corriger une routine
 
-Mitra trouve les routines de lui-même, et le menu **⋯** du détail le corrige là où il s’est trompé. **Renommer…** donne à la routine un nom à vous ; vous pouvez aussi cliquer sur son nom et taper. Le bouton à côté d’un nom à vous, ou retaper le titre de ses entrées, la nomme de nouveau d’après ses entrées. **Fusionner avec** ouvre les autres routines du même calendrier ; en choisir une réunit les deux, pour une habitude qui porte deux titres, comme « Comprimés du matin » et « Comprimés du soir ». **Pas une routine** la retire de l’onglet pour de bon : les entrées portant son titre ne sont plus regroupées en routine et restent dans votre calendrier.
+Mitra trouve les routines de lui-même, et le menu **⋯** du détail le corrige là où il s’est trompé. **Renommer…** donne à la routine un nom à vous ; vous pouvez aussi cliquer sur son nom et taper. Le bouton à côté d’un nom à vous, ou retaper le titre de ses entrées, la nomme de nouveau d’après ses entrées. **Fusionner avec** ouvre les autres routines du même calendrier ; en choisir une réunit les deux, pour une habitude qui porte deux titres, comme « Comprimés du matin » et « Comprimés du soir ». **Pas une routine** la retire de l’onglet pour de bon : les entrées portant son titre ne sont plus regroupées en routine et restent dans votre calendrier. Ce que vous avez dit ne pas être une routine attend en bas de l’onglet, replié sous **Pas des routines** ; ouvrez-le pour en refaire une routine.
+
+L’éditeur d’une entrée a une ligne **Routine** après ses dates, affichée quand l’entrée appartient à une routine ou pourrait y appartenir. Choisissez-y une autre routine de son calendrier, **Nouvelle routine** pour en commencer une à partir de l’entrée, que les entrées suivantes portant son titre rejoignent, ou **Pas une routine** pour l’en retirer pour de bon, comme un déjeuner qui ne partage que son titre avec une habitude. La ligne montre la série de la routine à côté de son nom.
 
 ## Utiliser une routine
 

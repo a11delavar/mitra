@@ -44,7 +44,8 @@ export class Icon extends Component {
 		}
 
 		const svgElement = createElement(data)
-		svgElement.setAttribute('fill', this.fill ? 'currentColor' : 'none')
+		// A style rather than the attribute, which takes no custom property: an outline can be tinted (--mitra-icon-fill).
+		svgElement.style.fill = this.fill ? 'currentColor' : 'var(--mitra-icon-fill, none)'
 		svgElement.setAttribute('stroke', 'currentColor')
 		svgElement.setAttribute('stroke-linecap', 'round')
 		svgElement.setAttribute('stroke-linejoin', 'round')

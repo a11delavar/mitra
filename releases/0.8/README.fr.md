@@ -1,10 +1,17 @@
 ---
-title: Suivi des routines, Todoist, statut des événements et échéances en un coup d'œil
+title: Routines et séries, Todoist, statut des événements et échéances en un coup d'œil
 ---
 Mitra 0.8 vous aide à tenir les choses que vous faites encore et encore, et garde une trace de ce qui n'a pas eu lieu.
 
-## Suivi des routines
-Mitra regroupe déjà en routines ce que vous faites souvent, comme la salle de sport ou une coupe de cheveux toutes les cinq semaines. Elles ont désormais une place à elles, où vous voyez d'un coup d'œil les derniers jours de chaque routine : combien vous en avez tenu, et lesquels ont été annulés ou manqués. Vous pouvez renommer une routine, fusionner deux routines qui vont ensemble, ou indiquer à Mitra que quelque chose n'est pas une routine. Les routines restent aussi stables dans les vues mois et année, aussi loin que vous fassiez défiler, et votre connecteur IA peut vous dire où elles en sont.
+## Routines et séries
+Mitra regroupe déjà en routines ce que vous faites souvent, comme la salle de sport ou une coupe de cheveux toutes les cinq semaines. Elles ont désormais une place à elles, où une flamme montre d'un coup d'œil la série de chaque routine, et son détail les jours tenus, annulés ou manqués. Vous pouvez renommer une routine, fusionner deux routines qui vont ensemble, ou indiquer à Mitra que quelque chose n'est pas une routine. Les routines restent aussi stables dans les vues mois et année, aussi loin que vous fassiez défiler, et votre connecteur IA peut vous dire où elles en sont.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
+	<img src="routines-light.webp" alt="L’onglet Routines à côté de la vue mois, chaque routine avec sa série, avec le détail de la salle de sport ouvert à côté">
+</picture>
+
+Documentation : [Routines](../../docs/routines.md)
 
 ## Même heure partout
 Certaines choses ne dépendent pas de votre fuseau horaire : un médicament à 7 h 30 se prend à 7 h 30, chez vous comme en voyage. Choisissez **Même heure partout** en haut des fuseaux horaires d'une entrée, et elle reste à cette heure où que vous soyez, marquée d'un globe barré. Les entrées venues d'autres applications sans fuseau horaire l'affichent aussi. Avant que vous en déplaciez une vers un calendrier qui n'a pas de telles heures, comme Google Calendar, Mitra vous prévient qu'elle recevra un fuseau horaire fixe.

@@ -35,14 +35,14 @@ Hoe vaak een routine voorkomt, bepaalt hoe de weergaven haar tonen:
 
 ## Het tabblad Routines
 
-Open **Routines** in de zijbalk, naast Agenda's en Planning, of typ de naam in het opdrachtenpalet. **Vandaag** toont de routines van vandaag, op volgorde van hun tijd, en **Later** de rest, op hun volgende datum. Elke rij toont de naam van de routine, wanneer ze voorkomt, en een strook met haar laatste 14 herhalingen, met hoeveel je er hebt gedaan.
+Open **Routines** in de zijbalk, naast Agenda's en Planning, of typ de naam in het opdrachtenpalet. **Vandaag** toont de routines van vandaag, op volgorde van hun tijd, en **Later** de rest, op hun volgende datum. Elke rij toont de naam van de routine, wanneer ze voorkomt, en haar reeks: een vlam in de kleur van haar agenda met hoeveel herhalingen je op rij hebt gedaan. Een gemiste of geannuleerde beëindigt de reeks, en de vlam wordt grijs.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
-  <img src="../assets/screenshots/routines-detail-light.webp" alt="Het tabblad Routines in de zijbalk, elke routine met haar laatste herhalingen en hoeveel er zijn gedaan" />
+  <img src="../assets/screenshots/routines-detail-light.webp" alt="Het tabblad Routines in de zijbalk, elke routine met haar reeks, met het detail van de sportschool ernaast geopend" />
 </picture>
 
-Elk vakje van de strook is één herhaling:
+Het detail van een routine toont haar laatste weken als raster, één vakje per dag:
 
 - Een gevuld vakje is gedaan: een afspraak die heeft plaatsgevonden, of een taak die je hebt afgevinkt.
 - Een leeg vakje is gemist: een taak die na haar dag open bleef.
@@ -56,11 +56,13 @@ De status van vandaag staat aan het eind van de rij van een routine: het selecti
 
 ## De details van een routine
 
-Klik op een rij voor meer: sinds wanneer de routine loopt, haar laatste weken als raster van dagen, hoeveel van de laatste en van het afgelopen jaar je hebt gedaan, en op welke weekdag ze het vaakst erbij inschiet. Het menu **⋯** heeft **Vandaag gedaan** voor een taak, **Geannuleerd** om de herhaling van vandaag te annuleren, en **In agenda tonen** om de volgende te openen.
+Klik op een rij voor meer: sinds wanneer de routine loopt, haar laatste weken als raster van dagen en daaronder drie tegels: haar reeks, met als kop hoe het gaat, zoals **Op koers** of **Zakt weg**, en je record; hoeveel van het afgelopen jaar je hebt gedaan; en op welke weekdag ze het vaakst erbij inschiet. Het menu **⋯** heeft **Vandaag gedaan** voor een taak, **Geannuleerd** om de herhaling van vandaag te annuleren, en **In agenda tonen** om de volgende te openen. Vink daar **Bijhouden hoe het gaat** uit voor een routine die je alleen nakomt, zoals een rekening of een vergadering: ze toont dan geen reeks, en haar detail alleen het raster.
 
 ## Een routine corrigeren
 
-Mitra vindt routines zelf, en het menu **⋯** in de details corrigeert waar het er een verkeerd heeft. **Naam wijzigen…** geeft de routine een eigen naam; je kunt ook op de naam klikken en typen. De knop naast een eigen naam, of de titel van haar items opnieuw typen, geeft haar weer de naam van haar items. **Samenvoegen met** opent de andere routines van dezelfde agenda; er een kiezen voegt de twee samen, voor één gewoonte met twee titels, zoals ‘Ochtendpillen’ en ‘Avondpillen’. **Geen routine** haalt haar voorgoed uit het tabblad: items met haar titel worden niet meer tot een routine samengevoegd, en ze blijven in je agenda.
+Mitra vindt routines zelf, en het menu **⋯** in de details corrigeert waar het er een verkeerd heeft. **Naam wijzigen…** geeft de routine een eigen naam; je kunt ook op de naam klikken en typen. De knop naast een eigen naam, of de titel van haar items opnieuw typen, geeft haar weer de naam van haar items. **Samenvoegen met** opent de andere routines van dezelfde agenda; er een kiezen voegt de twee samen, voor één gewoonte met twee titels, zoals ‘Ochtendpillen’ en ‘Avondpillen’. **Geen routine** haalt haar voorgoed uit het tabblad: items met haar titel worden niet meer tot een routine samengevoegd, en ze blijven in je agenda. Wat je geen routine noemde, wacht ingeklapt onderaan het tabblad onder **Geen routines**; open het om er weer een routine van te maken.
+
+De editor van een item heeft na de datums een rij **Routine**, die verschijnt als het item bij een routine hoort of zou kunnen horen. Kies daar een andere routine van zijn agenda, **Nieuwe routine** om er een te beginnen vanaf het item, waar latere items met zijn titel bij komen, of **Geen routine** om het er voorgoed uit te halen, zoals een lunch die alleen zijn titel deelt met een gewoonte. De rij toont de reeks van de routine naast haar naam.
 
 ## Een routine gebruiken
 

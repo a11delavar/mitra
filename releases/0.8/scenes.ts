@@ -1,5 +1,5 @@
 import {
-	aroundEditorWith, aroundOpenDialog, appText, bringIntoView, chipOf, click, type Clip, editorOpened, openChip, openEditor, screenshot, scrollToMorning, show, waitFor,
+	aroundEditorWith, aroundOpenDialog, appText, bringIntoView, chipOf, click, type Clip, details, editorOpened, openChip, openEditor, screenshot, scrollToMorning, show, sidebarTab, waitFor,
 } from '../../scripts/capture.ts'
 import { middleOf } from '../../scripts/film.ts'
 import { still } from '../../scripts/scenes.ts'
@@ -123,4 +123,22 @@ still('due-stretch', { moment: mondayEvening }, async ({ browser, open, text }) 
 	await browser.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...await middleOf(browser, deck), button: 'none' })
 	await waitFor(() => browser.evaluate<boolean>('return !!document.querySelector("mitra-due-mark .line")'), 'the deck stretched to its due')
 	return clip
+})
+
+/**
+ * The Routines tab with the tabs above it, and the gym's detail open beside its row: a year of sessions, the skipped
+ * ones gaps and the called-off ones dashes, over the month view whose marks it counts.
+ */
+still('routines', async ({ browser, open, text }) => {
+	await open()
+	await show(browser, 'month')
+	await click(browser, sidebarTab('routines'))
+	await waitFor(() => browser.evaluate<boolean>('return document.querySelectorAll("mitra-routine-row").length > 0'), 'the routines')
+	const gym = `[...document.querySelectorAll('mitra-routine-row')].find(row => row.querySelector('.name').textContent.includes(${JSON.stringify(text('💪 Gym'))}))`
+	await browser.evaluate(`${gym}.scrollIntoView({ block: 'center' })`)
+	await click(browser, `${gym}.querySelector('.when')`)
+	await waitFor(() => browser.evaluate<boolean>('return !!document.querySelector("mitra-routine-details mitra-popover:popover-open .cells i")'), 'the gym\'s detail')
+	// Down to the detail's foot, and as wide as the view's clip.
+	const bottom = await browser.evaluate<number>('return document.querySelector("mitra-routine-details mitra-popover").getBoundingClientRect().bottom')
+	return { x: 0, y: 0, width: details.view.width, height: Math.round(Math.max(620, bottom + 16)) }
 })

@@ -22,7 +22,7 @@ export class DialogDissolveRoutine extends DialogComponent<{ readonly name: stri
 			<mitra-dialog heading=${t('Not a routine?')}>
 				<p>${t('"${name}" leaves the Routines tab, and entries with its title are no longer gathered into a routine. Its entries stay on your calendar.', { name: this.parameters.name })}</p>
 				<mitra-choices>
-					<mitra-choice autofocus icon="repeat" @click=${() => this.close(false)}>${t('Keep it')}</mitra-choice>
+					<mitra-choice autofocus icon="activity" @click=${() => this.close(false)}>${t('Keep it')}</mitra-choice>
 					<mitra-choice icon="circle-off" @click=${() => this.close(true)}>${t('Not a routine')}</mitra-choice>
 				</mitra-choices>
 			</mitra-dialog>

@@ -35,14 +35,14 @@ A frequência de uma rotina decide como as vistas a mostram:
 
 ## A aba Rotinas
 
-Abra **Rotinas** na barra lateral, ao lado de Calendários e Planeamento, ou digite o nome na paleta de comandos. **Hoje** mostra as rotinas de hoje, pela hora, e **Mais tarde** as restantes, pela próxima data. Cada linha mostra o nome da rotina, quando ela acontece e uma faixa das suas últimas 14 ocorrências, com quantas você cumpriu.
+Abra **Rotinas** na barra lateral, ao lado de Calendários e Planeamento, ou digite o nome na paleta de comandos. **Hoje** mostra as rotinas de hoje, pela hora, e **Mais tarde** as restantes, pela próxima data. Cada linha mostra o nome da rotina, quando ela acontece e a sua sequência: uma chama da cor do seu calendário com quantas ocorrências seguidas você cumpriu. Uma perdida ou cancelada termina a sequência, e a chama fica cinza.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
-  <img src="../assets/screenshots/routines-detail-light.webp" alt="A aba Rotinas na barra lateral, cada rotina com as suas últimas ocorrências e quantas foram cumpridas" />
+  <img src="../assets/screenshots/routines-detail-light.webp" alt="A aba Rotinas na barra lateral, cada rotina com a sua sequência, com o detalhe do ginásio aberto ao lado" />
 </picture>
 
-Cada célula da faixa é uma ocorrência:
+O detalhe de uma rotina mostra as suas últimas semanas como uma grade, uma célula por dia:
 
 - Uma célula cheia foi cumprida: um evento que aconteceu, ou uma tarefa que você marcou.
 - Uma célula vazia foi perdida: uma tarefa que ficou em aberto depois do seu dia.
@@ -56,11 +56,13 @@ O estado de hoje fica no fim da linha de uma rotina: a caixa de seleção de uma
 
 ## O detalhe de uma rotina
 
-Clique em uma linha para ver mais: desde quando a rotina existe, as suas últimas semanas como uma grade de dias, quantas das últimas e do último ano você cumpriu, e o dia da semana em que ela mais falha. O seu menu **⋯** oferece **Feito hoje** para uma tarefa, **Cancelado** para cancelar a ocorrência de hoje e **Mostrar no calendário** para abrir a próxima.
+Clique em uma linha para ver mais: desde quando a rotina existe, as suas últimas semanas como uma grade de dias e, abaixo, três blocos: a sua sequência, encabeçada por como ela vai, como **Nos trilhos** ou **Perdendo o ritmo**, com o seu recorde; quanto do último ano você cumpriu; e o dia da semana em que ela mais falha. O seu menu **⋯** oferece **Feito hoje** para uma tarefa, **Cancelado** para cancelar a ocorrência de hoje e **Mostrar no calendário** para abrir a próxima. Desmarque ali **Acompanhar como vai** para uma rotina que você apenas cumpre, como uma conta ou uma reunião: ela deixa de mostrar sequência, e o seu detalhe só a grade.
 
 ## Corrigir uma rotina
 
-O Mitra encontra as rotinas sozinho, e o menu **⋯** do detalhe o corrige onde ele errou. **Renomear…** dá à rotina um nome seu; você também pode clicar no nome dela e digitar. O botão ao lado de um nome seu, ou digitar de novo o título das suas entradas, volta a nomeá-la pelas entradas. **Mesclar com** abre as outras rotinas do mesmo calendário; escolher uma junta as duas, para um hábito com dois títulos, como "Comprimidos da manhã" e "Comprimidos da noite". **Não é uma rotina** tira-a da aba de vez: as entradas com o seu título deixam de ser reunidas numa rotina e continuam no seu calendário.
+O Mitra encontra as rotinas sozinho, e o menu **⋯** do detalhe o corrige onde ele errou. **Renomear…** dá à rotina um nome seu; você também pode clicar no nome dela e digitar. O botão ao lado de um nome seu, ou digitar de novo o título das suas entradas, volta a nomeá-la pelas entradas. **Mesclar com** abre as outras rotinas do mesmo calendário; escolher uma junta as duas, para um hábito com dois títulos, como "Comprimidos da manhã" e "Comprimidos da noite". **Não é uma rotina** tira-a da aba de vez: as entradas com o seu título deixam de ser reunidas numa rotina e continuam no seu calendário. O que você disse não ser uma rotina fica no fim da aba, recolhido em **Não são rotinas**; abra para voltar a torná-lo uma rotina.
+
+O editor de uma entrada tem uma linha **Rotina** depois das suas datas, mostrada quando a entrada pertence a uma rotina ou poderia pertencer. Escolha ali outra rotina do seu calendário, **Nova rotina** para começar uma a partir da entrada, à qual as entradas seguintes com o seu título se juntam, ou **Não é uma rotina** para tirá-la de vez, como um almoço que só partilha o título com um hábito. A linha mostra a sequência da rotina ao lado do seu nome.
 
 ## Usar uma rotina
 

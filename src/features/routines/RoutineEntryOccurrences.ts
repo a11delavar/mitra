@@ -1,6 +1,8 @@
 import type { EntryOccurrence } from '#features/recurrence'
 import type { TimeZone } from '#features/time/TimeZone.js'
 import { RoutineEntryOccurrenceStatus } from './RoutineEntryOccurrenceStatus.js'
+import { RoutineStanding } from './RoutineStanding.js'
+import { RoutineStreak } from './RoutineStreak.js'
 
 /**
  * A routine's dates read at one moment, in the days of a zone, in order up to the first still to come: where each stands,
@@ -34,6 +36,10 @@ export class RoutineEntryOccurrences {
 		return this.occurrences.filter(occurrence => this.statusOf(occurrence)?.settled)
 	}
 
+	private isKept(occurrence: EntryOccurrence) {
+		return this.statusOf(occurrence) === RoutineEntryOccurrenceStatus.Kept
+	}
+
 	/** Where one of its dates stands. */
 	statusOf(occurrence: EntryOccurrence) {
 		return this.statuses.get(occurrence)
@@ -56,13 +62,23 @@ export class RoutineEntryOccurrences {
 
 	/** How many of its last `count` settled dates were kept: a cancelled one counts against it, as a missed one does. */
 	kept(count: number) {
-		return this.settledOccurrences.slice(-count).filter(occurrence => this.statusOf(occurrence) === RoutineEntryOccurrenceStatus.Kept).length
+		return this.settledOccurrences.slice(-count).filter(occurrence => this.isKept(occurrence)).length
+	}
+
+	/** Its streaks of dates kept in a row, oldest first, the last running to its last settled date; none before one settled. */
+	get streaks() {
+		return RoutineStreak.along(this.settledOccurrences, occurrence => this.isKept(occurrence))
+	}
+
+	/** How it goes, in a word, from its settled dates. */
+	get standing() {
+		return RoutineStanding.of(this.settledOccurrences.map(occurrence => this.isKept(occurrence)))
 	}
 
 	/** The weekday (ISO, Monday 1) with the most missed or cancelled dates after `from`, where three or more fell on it. */
 	slipsAfter(from: Temporal.PlainDate) {
 		const settled = this.settledOccurrences
-			.map(occurrence => ({ day: occurrence.dayIn(this.zone)!, kept: this.statusOf(occurrence) === RoutineEntryOccurrenceStatus.Kept }))
+			.map(occurrence => ({ day: occurrence.dayIn(this.zone)!, kept: this.isKept(occurrence) }))
 			.filter(({ day }) => Temporal.PlainDate.compare(day, from) > 0)
 		const tallies = [...Map.groupBy(settled, ({ day }) => day.dayOfWeek)]
 			.map(([weekday, dates]) => ({ weekday, count: dates.filter(date => !date.kept).length, of: dates.length }))

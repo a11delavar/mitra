@@ -12,6 +12,7 @@ declare global {
 		"\"${heading}\" is closed, but ${count:pluralityNumber} of its subtasks are still open.": unknown
 		"\"${name}\" leaves the Routines tab, and entries with its title are no longer gathered into a routine. Its entries stay on your calendar.": unknown
 		"${browser} on ${platform}": unknown
+		"${count:number} in a row": unknown
 		"${count:number} more": unknown
 		"${count:number} of ${total:number}": unknown
 		"${count:number} of ${total:number} kept": unknown
@@ -141,8 +142,11 @@ declare global {
 		"Availability": unknown
 		"Availability leaves the week view. It stays in its calendars, and busy availability still shows as busy to others.": unknown
 		"Back": unknown
+		"Back on track": unknown
 		"before": unknown
 		"before at ${time}": unknown
+		"best ${count:number}": unknown
+		"best ${count:number} in a row": unknown
 		"Blocked": unknown
 		"Blocked by": unknown
 		"Blocks": unknown
@@ -280,6 +284,7 @@ declare global {
 		"Edit repeating entry": unknown
 		"Email participants": unknown
 		"End date": unknown
+		"Ended": unknown
 		"Ends": unknown
 		"Entries": unknown
 		"Estimate": unknown
@@ -349,12 +354,10 @@ declare global {
 		"Keep it": unknown
 		"Keep the calendar": unknown
 		"Keep the chain intact": unknown
-		"kept": unknown
 		"Kept": unknown
 		"Keyboard Shortcuts": unknown
 		"KeyboardShortcuts.Keywords": unknown
 		"Language": unknown
-		"Last ${count:number}": unknown
 		"last seen ${when}": unknown
 		"last used ${date}": unknown
 		"Later": unknown
@@ -368,6 +371,7 @@ declare global {
 		"Make attendance optional": unknown
 		"Make attendance optional for everyone": unknown
 		"Make home": unknown
+		"Make it a routine again": unknown
 		"Mark all as done": unknown
 		"Mark all optional": unknown
 		"Mark all required": unknown
@@ -413,6 +417,7 @@ declare global {
 		"never used": unknown
 		"New calendar": unknown
 		"New dev build: ${count:pluralityNumber} commits ahead": unknown
+		"New routine": unknown
 		"New task": unknown
 		"New token": unknown
 		"Next": unknown
@@ -432,9 +437,11 @@ declare global {
 		"No matches": unknown
 		"No matching entries": unknown
 		"No release notes available": unknown
+		"No routine": unknown
 		"None": unknown
 		"Not a routine": unknown
 		"Not a routine?": unknown
+		"Not routines": unknown
 		"Nothing from the file was added.": unknown
 		"Nothing is deleted here until its copy has landed": unknown
 		"Nothing planned yet. Draw a task on the row below": unknown
@@ -448,12 +455,14 @@ declare global {
 		"Numbers": unknown
 		"Occurrences": unknown
 		"of event at ${time}": unknown
+		"Off and on": unknown
 		"On": unknown
 		"on ${date}": unknown
 		"on ${weekday}": unknown
 		"on the ${ordinal}": unknown
 		"on the ${ordinal} ${weekday}": unknown
 		"on the last ${weekday}": unknown
+		"On track": unknown
 		"One calendar to plan your events and tasks": unknown
 		"One for each connection, so you can revoke each on its own": unknown
 		"Only Show ${name}": unknown
@@ -531,6 +540,7 @@ declare global {
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
 		"Revoke this token": unknown
+		"Routine": unknown
 		"Routines": unknown
 		"Same time everywhere": unknown
 		"Sample calendars filled with generated data, rebuilt daily": unknown
@@ -567,8 +577,10 @@ declare global {
 		"ShowPreviouslyVisibleSources.Keywords": unknown
 		"ShowRoutines.Keywords": unknown
 		"Sign out": unknown
+		"since ${date}": unknown
 		"Since ${date}": unknown
 		"Site URL": unknown
+		"Slipping": unknown
 		"Slips most on": unknown
 		"Snap to": unknown
 		"SnapSetting.Keywords": unknown
@@ -577,6 +589,7 @@ declare global {
 		"Sort descending": unknown
 		"Sources": unknown
 		"Start date": unknown
+		"Starting": unknown
 		"Status": unknown
 		"Still open": unknown
 		"Stop notifying this device": unknown
@@ -605,6 +618,7 @@ declare global {
 		"the last ${weekday}": unknown
 		"The originals stay exactly where they are": unknown
 		"The step dragging and resizing land on": unknown
+		"The streak ended": unknown
 		"The task databases of your workspace": unknown
 		"The tasks of your Todoist projects": unknown
 		"Their copies landed but the originals could not be deleted. Delete them here by hand.": unknown
@@ -633,7 +647,6 @@ declare global {
 		"Title": unknown
 		"To Do": unknown
 		"Today": unknown
-		"today still open": unknown
 		"Todoist": unknown
 		"Todoist account": unknown
 		"Todoist API Token": unknown
@@ -645,6 +658,7 @@ declare global {
 		"ToggleSidebar.Keywords": unknown
 		"Token": unknown
 		"Tomorrow": unknown
+		"Track how it goes": unknown
 		"Type": unknown
 		"unchanged": unknown
 		"Unit": unknown

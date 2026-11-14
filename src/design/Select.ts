@@ -5,6 +5,7 @@ import type { Listbox } from './Combobox.js'
 import './Icon.js'
 import { disabled } from './disabled.css.js'
 import { fieldChrome } from './fieldChrome.css.js'
+import { separator } from './separator.css.js'
 
 /**
  * The ARIA select-only combobox over its slotted `mitra-option`s. Like a native select it takes the value selected; a
@@ -143,6 +144,11 @@ export class Select<T = unknown> extends Control {
 				min-inline-size: max(10rem, anchor-size(inline));
 				max-block-size: min(32rem, 80dvh);
 				position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline, --centered;
+			}
+
+			/* A listbox owns options alone, so a line between them is drawn but not announced (aria-hidden). */
+			::slotted(hr) {
+				${separator};
 			}
 		`
 	}

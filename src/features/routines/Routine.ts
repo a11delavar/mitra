@@ -2,6 +2,7 @@ import { converter } from '@a11d/converter'
 import type { DateTime } from '@3mo/date-time'
 import type { EntityManager } from '@mikro-orm/core'
 import { Source } from '#features/sources'
+import type { Entry } from '#features/entries'
 import { Recurrence } from '#features/recurrence/Recurrence.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { EntryTimeZone } from '#features/time/EntryTimeZone.js'
@@ -62,6 +63,10 @@ export class Routine extends Entity {
 	@equality()
 	@property({ type: 'boolean', nullable: true }) dissolved?: boolean
 
+	/** Not kept up but kept to, the person said, as a bill or a meeting is: no streak nor any reading of how it goes. */
+	@equality()
+	@property({ type: 'boolean', nullable: true }) untracked?: boolean
+
 	/** How often it comes. Told as it is listed (`Routine.measure`), as `titles` are, never stored. */
 	@converter(RoutineCadence.converter) cadence?: RoutineCadence
 
@@ -74,6 +79,12 @@ export class Routine extends Entity {
 	constructor(init?: Partial<Routine>) {
 		super()
 		Object.assign(this, init)
+	}
+
+	/** Takes `entry` in, as the person chose: it names this routine from now on, and is declined by none any more. */
+	adopt(entry: Entry) {
+		entry.routineId = this.id
+		entry.routineDeclined = undefined
 	}
 
 	/** Gives it the person's name; none, or a blank one, names it after its members again. */
@@ -91,6 +102,21 @@ export class Routine extends Entity {
 	/** A routine again, after it was dissolved. */
 	restart() {
 		this.dissolved = undefined
+	}
+
+	/** Whether it is kept up, so its streak and how it goes are read; a schedule of the person's is not. */
+	get tracked() {
+		return !this.untracked
+	}
+
+	/** Its streak and how it goes are read, as they are for every routine at first. */
+	track() {
+		this.untracked = undefined
+	}
+
+	/** Just a schedule, not something kept up: no streak, nor any reading of how it goes. */
+	untrack() {
+		this.untracked = true
 	}
 
 	/** What it is called: the person's name, else the titles its members wear, the newest first. */

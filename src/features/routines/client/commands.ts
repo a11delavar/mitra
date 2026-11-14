@@ -3,7 +3,7 @@ import { command, Command } from '#features/commands/Command.js'
 @command()
 export class ShowRoutines extends Command {
 	readonly heading = t('Routines')
-	readonly icon = 'repeat'
+	readonly icon = 'activity'
 	readonly keywords = t('ShowRoutines.Keywords')
 	readonly keys = []
 	readonly group = undefined

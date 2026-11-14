@@ -15,7 +15,7 @@ class Parameters {
 
 @operation(Parameters)
 @label('Routines')
-@description('Gives the routines in the enabled calendars: what the person keeps doing, each a group of entries of one calendar sharing a title, repeating or not. Each with how often it comes in days, its tightest rule, since when, its last dates and the next, how many of them were kept, and the weekday it slips on most; the next date first. A date is its entry\'s `id`, heading and type, with that date\'s start, end and due and its `status`: kept, cancelled, missed (a task left open past its day), open (today\'s) or upcoming. A date of a repeating entry also has its `occurrence`, its original start, as the overview names it and complete_task takes it. Days are in the home zone.')
+@description('Gives the routines in the enabled calendars: what the person keeps doing, each a group of entries of one calendar sharing a title, repeating or not. Each with how often it comes in days, its tightest rule, since when, its last dates and the next, and, where it is `tracked`, how many of them were kept and the weekday it slips on most (an untracked one is a schedule, such as a bill or a meeting, not something kept up); the next date first. A date is its entry\'s `id`, heading and type, with that date\'s start, end and due and its `status`: kept, cancelled, missed (a task left open past its day), open (today\'s) or upcoming. A date of a repeating entry also has its `occurrence`, its original start, as the overview names it and complete_task takes it. Days are in the home zone.')
 @tool({ name: 'get_routines', annotations: { readOnlyHint: true } })
 export class GetRoutines extends Operation<Parameters> {
 	async run({ em, user }: OperationContext) {
@@ -47,9 +47,13 @@ export class GetRoutines extends Operation<Parameters> {
 				cadence: routine.cadence?.days,
 				rule: tightest?.recurrence?.toRRule(tightest.allDay),
 				since: routine.since,
-				kept: dates.kept(last),
-				of: dates.settled(last),
-				slips: dates.slipsAfter(zone.dayOf(now).subtract({ years: 1 })),
+				tracked: routine.tracked,
+				// How it was kept means nothing for a routine its person keeps to as a schedule, as the app shows none.
+				...!routine.tracked ? {} : {
+					kept: dates.kept(last),
+					of: dates.settled(last),
+					slips: dates.slipsAfter(zone.dayOf(now).subtract({ years: 1 })),
+				},
 				occurrences: dates.last(last).map(dateOf),
 				next: dateOf(dates.next),
 			}

@@ -272,7 +272,7 @@ export class Planning extends Component {
 				${this.headerTemplate(t('Unscheduled'), unscheduled.length)}
 				${!unscheduled.length ? html`
 					<div class="empty">
-						<mitra-icon icon="list-todo"></mitra-icon>
+						<mitra-icon icon="goal"></mitra-icon>
 						<span>${t('Tasks without a date land here. Drag one onto the calendar to schedule it')}</span>
 					</div>
 				` : html`

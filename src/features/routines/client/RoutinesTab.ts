@@ -1,10 +1,11 @@
 import { Component, component, css, html, repeat } from '@a11d/lit'
+import { Calendars } from '#features/sources/client/Calendars.js'
 import { RoutineStore, type RoutineSection } from './RoutineStore.js'
 import './RoutineRow.js'
 
 /**
- * The sidebar's Routines tab: what the person keeps up, one row per routine of the visible calendars, sectioned by how
- * often they come. It draws what `GET /routines?last=` answers; it is no list of the store's occurrences.
+ * The sidebar's Routines tab: what the person keeps up, one row per routine of the visible calendars, those with a date
+ * today first. At its end, folded away, what the person said is no routine, to make one a routine again.
  */
 @component('mitra-routines')
 export class RoutinesTab extends Component {
@@ -39,6 +40,72 @@ export class RoutinesTab extends Component {
 					}
 				}
 
+				/* Folded by default: a correction made once, looked at rarely. Its summary reads as a section heading. */
+				> details {
+					> summary {
+						display: flex;
+						align-items: center;
+						gap: 0.25rem;
+						list-style: none;
+						cursor: pointer;
+						font-size: 0.75rem;
+						font-weight: 600;
+						color: var(--color-text-muted);
+
+						&::-webkit-details-marker {
+							display: none;
+						}
+
+						> mitra-icon {
+							font-size: 0.875rem;
+							transition: rotate 0.15s;
+
+							&:dir(rtl) {
+								scale: -1 1;
+							}
+						}
+
+						> .count {
+							margin-inline-start: auto;
+							font-variant-numeric: tabular-nums;
+						}
+					}
+
+					&[open] > summary > mitra-icon {
+						rotate: 90deg;
+					}
+
+					> ul {
+						display: flex;
+						flex-direction: column;
+						gap: 0.25rem;
+						margin: 0.35rem 0 0;
+						padding: 0;
+						list-style: none;
+
+						> li {
+							display: flex;
+							align-items: center;
+							gap: 0.25rem;
+							padding: 0.15rem 0.25rem 0.15rem 0.6rem;
+							border-radius: var(--border-radius);
+							border-inline-start: 3px solid var(--mitra-entry-segment-color);
+							background: color-mix(in srgb, var(--mitra-entry-segment-color) 10%, var(--color-background));
+							color: color-mix(in srgb, var(--mitra-entry-segment-color) 45%, var(--color-text));
+							font-size: 0.8125rem;
+							font-weight: 500;
+
+							> .name {
+								flex: 1;
+								min-inline-size: 0;
+								overflow: hidden;
+								text-overflow: ellipsis;
+								white-space: nowrap;
+							}
+						}
+					}
+				}
+
 				> .empty {
 					flex: 1;
 					display: flex;
@@ -61,22 +128,48 @@ export class RoutinesTab extends Component {
 		`
 	}
 
+	/** Opened at the end of a long list, it shows what it holds rather than unfolding out of sight. */
+	private static handleDissolvedToggle(e: Event) {
+		const details = e.currentTarget as HTMLDetailsElement
+		if (details.open) {
+			details.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+		}
+	}
+
 	protected override createRenderRoot() { return this }
 
 	protected override get template() {
 		const sections = RoutineStore.sections
-		return !RoutineStore.loaded ? html.nothing : !sections.length ? html`
-			<div class="empty">
-				<mitra-icon icon="repeat"></mitra-icon>
-				<span>${t('What you keep doing shows up here: an entry that repeats, or four entries with one title.')}</span>
-			</div>
-		` : html`
-			${sections.map(({ section, routines }) => html`
+		const dissolved = RoutineStore.visibleDissolved
+		return !RoutineStore.loaded ? html.nothing : html`
+			${!sections.length ? html`
+				<div class="empty">
+					<mitra-icon icon="activity"></mitra-icon>
+					<span>${t('What you keep doing shows up here: an entry that repeats, or four entries with one title.')}</span>
+				</div>
+			` : sections.map(({ section, routines }) => html`
 				<section>
 					<h2>${RoutinesTab.headingOf(section)}</h2>
 					${repeat(routines, routine => routine.id, routine => html`<mitra-routine-row .routine=${routine}></mitra-routine-row>`)}
 				</section>
 			`)}
+			${!dissolved.length ? html.nothing : html`
+				<details @toggle=${RoutinesTab.handleDissolvedToggle}>
+					<summary>
+						<mitra-icon icon="chevron-right"></mitra-icon>
+						${t('Not routines')}
+						<span class="count">${dissolved.length}</span>
+					</summary>
+					<ul>
+						${repeat(dissolved, routine => routine.id, routine => html`
+							<li style="--mitra-entry-segment-color: ${Calendars.getSource(routine.sourceId)?.color ?? ''}">
+								<span class="name" title=${routine.label}>${routine.label}</span>
+								<mitra-icon-button icon="undo-2" label=${t('Make it a routine again')} @click=${() => RoutineStore.restore(routine)}></mitra-icon-button>
+							</li>
+						`)}
+					</ul>
+				</details>
+			`}
 		`
 	}
 }

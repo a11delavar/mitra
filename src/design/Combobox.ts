@@ -347,6 +347,15 @@ export class Option extends Component {
 				display: none;
 			}
 
+			/* In the tick's place, where a flat list keeps its inset; a tree's row puts it in its tick column instead. */
+			[part=marker] {
+				position: absolute;
+				inset-inline-start: 0.625rem;
+				top: 50%;
+				translate: 0 -50%;
+				font-size: 0.875rem;
+			}
+
 			[part=content] {
 				flex: 1;
 				display: flex;

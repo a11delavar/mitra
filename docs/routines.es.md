@@ -35,14 +35,14 @@ La frecuencia de una rutina decide cómo la muestran las vistas:
 
 ## La pestaña Rutinas
 
-Abre **Rutinas** en la barra lateral, junto a Calendarios y Planificación, o escribe su nombre en la paleta de comandos. **Hoy** muestra las rutinas de hoy, según su hora, y **Más tarde** las demás, por su próxima fecha. Cada fila muestra el nombre de la rutina, cuándo aparece y una franja con sus últimas 14 repeticiones, con cuántas de ellas cumpliste.
+Abre **Rutinas** en la barra lateral, junto a Calendarios y Planificación, o escribe su nombre en la paleta de comandos. **Hoy** muestra las rutinas de hoy, según su hora, y **Más tarde** las demás, por su próxima fecha. Cada fila muestra el nombre de la rutina, cuándo aparece y su racha: una llama del color de su calendario con cuántas repeticiones seguidas cumpliste. Una que faltaste o cancelaste termina la racha, y la llama se vuelve gris.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
-  <img src="../assets/screenshots/routines-detail-light.webp" alt="La pestaña Rutinas en la barra lateral, cada rutina con sus últimas repeticiones y cuántas se cumplieron" />
+  <img src="../assets/screenshots/routines-detail-light.webp" alt="La pestaña Rutinas en la barra lateral, cada rutina con su racha, con el detalle del gimnasio abierto al lado" />
 </picture>
 
-Cada casilla de la franja es una repetición:
+El detalle de una rutina muestra sus últimas semanas como una cuadrícula, una casilla por día:
 
 - Una casilla llena se cumplió: un evento que tuvo lugar o una tarea que marcaste.
 - Una casilla hueca se perdió: una tarea que quedó abierta después de su día.
@@ -56,11 +56,13 @@ El estado de hoy está al final de la fila de una rutina: la casilla de una tare
 
 ## El detalle de una rutina
 
-Haz clic en una fila para ver más: desde cuándo existe la rutina, sus últimas semanas como una cuadrícula de días, cuántas de las últimas y del último año cumpliste, y el día de la semana en que más falla. Su menú **⋯** ofrece **Hecho hoy** para una tarea, **Cancelado** para cancelar la repetición de hoy y **Mostrar en el calendario** para abrir la siguiente.
+Haz clic en una fila para ver más: desde cuándo existe la rutina, sus últimas semanas como una cuadrícula de días y, debajo, tres recuadros: su racha, encabezada por cómo va, como **En marcha** o **Flaqueando**, con tu mejor racha; cuánto del último año cumpliste; y el día de la semana en que más falla. Su menú **⋯** ofrece **Hecho hoy** para una tarea, **Cancelado** para cancelar la repetición de hoy y **Mostrar en el calendario** para abrir la siguiente. Desmarca allí **Seguir cómo va** para una rutina que solo cumples, como una factura o una reunión: entonces no muestra racha, y su detalle solo la cuadrícula.
 
 ## Corregir una rutina
 
-Mitra encuentra las rutinas por sí mismo, y el menú **⋯** del detalle lo corrige donde se equivocó. **Renombrar…** le da a la rutina un nombre propio; también puedes hacer clic en su nombre y escribir. El botón junto a un nombre propio, o volver a escribir el título de sus entradas, la nombra otra vez según sus entradas. **Fusionar con** abre las demás rutinas del mismo calendario; elegir una une las dos, para un hábito con dos títulos, como «Pastillas de la mañana» y «Pastillas de la noche». **No es una rutina** la saca de la pestaña para siempre: las entradas con su título ya no se agrupan en una rutina y siguen en tu calendario.
+Mitra encuentra las rutinas por sí mismo, y el menú **⋯** del detalle lo corrige donde se equivocó. **Renombrar…** le da a la rutina un nombre propio; también puedes hacer clic en su nombre y escribir. El botón junto a un nombre propio, o volver a escribir el título de sus entradas, la nombra otra vez según sus entradas. **Fusionar con** abre las demás rutinas del mismo calendario; elegir una une las dos, para un hábito con dos títulos, como «Pastillas de la mañana» y «Pastillas de la noche». **No es una rutina** la saca de la pestaña para siempre: las entradas con su título ya no se agrupan en una rutina y siguen en tu calendario. Lo que marcaste como no rutina espera al final de la pestaña, plegado bajo **No son rutinas**; ábrelo para volver a hacerlo una rutina.
+
+El editor de una entrada tiene una fila **Rutina** después de sus fechas, que aparece cuando la entrada pertenece a una rutina o podría pertenecer. Elige allí otra rutina de su calendario, **Nueva rutina** para empezar una a partir de la entrada, a la que se unen las entradas posteriores con su título, o **No es una rutina** para sacarla para siempre, como un almuerzo que solo comparte el título con un hábito. La fila muestra la racha de la rutina junto a su nombre.
 
 ## Usar una rutina
 

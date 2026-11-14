@@ -1,12 +1,13 @@
 import { Component, component, css, event, html, property, query, state } from '@a11d/lit'
 import { ResizeController } from '@3mo/resize-observer'
 import { DateTime } from '@3mo/date-time'
-import { DissolveRoutine, MergeRoutines, RenameRoutine } from '#operations'
+import { DissolveRoutine, MergeRoutines, RenameRoutine, TrackRoutine } from '#operations'
 import { centered, devicePixel, type Popover } from '#design'
 import '#features/calendar/client/DateTime.calendar.js'
 import { EntryStatus, EntryType } from '#features/entries'
 import { reportSaveError } from '#features/entries/client/EntryStore.js'
 import { EntryEditorIntent } from '#features/entries/client/EntryEditorIntent.js'
+import { entryColors } from '#features/entries/client/entryColors.css.js'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { TimeZone } from '#features/time/TimeZone.js'
 import { type Routine } from '../Routine.js'
@@ -25,8 +26,9 @@ const precedence: ReadonlyArray<RoutineEntryOccurrenceStatus> = [
 const dayOf = (day: string) => new DateTime(TimeZone.device.midnightOf(Temporal.PlainDate.from(day)).getTime())
 
 /**
- * A routine's detail, beside its row or as a sheet on a phone: how often it comes and since when, a year of its occurrences
- * as a grid of days, how often it was kept and where it slips, and what today's occurrence can still become.
+ * A routine's detail, beside its row or as a sheet on a phone: how often it comes and since when, its recent occurrences
+ * as a grid of days, and, while it is tracked, its streak and how it goes, how often it was kept in the past year and where
+ * it slips; and what today's can still become.
  */
 @component('mitra-routine-details')
 export class RoutineDetails extends Component {
@@ -111,6 +113,12 @@ export class RoutineDetails extends Component {
 		await RoutineStore.refresh()
 	}
 
+	/** Tracks how it goes, or stops for a routine that is only a schedule; the menu stays open on its checkbox. */
+	private readonly handleTrack = async () => {
+		await TrackRoutine.call({ id: this.routine!.id, tracked: !this.routine!.tracked }).catch(reportSaveError)
+		await RoutineStore.refresh()
+	}
+
 	private readonly handleDissolve = async () => {
 		const routine = this.routine!
 		if (!await new DialogDissolveRoutine({ name: routine.label }).confirm().catch(() => false)) {
@@ -152,9 +160,15 @@ export class RoutineDetails extends Component {
 		return css`
 			${centered}
 
+			/* Tinted by its calendar's colour, its selection too, as an entry's editor is (entryColors). */
 			mitra-routine-details {
+				${entryColors};
 				display: contents;
 				cursor: default;
+
+				& ::selection {
+					background-color: color-mix(in srgb, var(--mitra-entry-segment-color) 40%, transparent);
+				}
 			}
 
 			/* Always beside its row where it fits: from the row's top down, else up from its bottom (a row low in the list),
@@ -197,32 +211,29 @@ export class RoutineDetails extends Component {
 						background: var(--mitra-entry-segment-color);
 					}
 
-					> .kind {
-						margin-inline-start: auto;
+					/* The calendar's name takes the room between, so the menu and closing sit at the end. */
+					> .calendar {
+						flex: 1;
 					}
 				}
 
-				/* The name, and beside a name of the person's own the way back to its entries' titles. */
+				/* The name, an editor's field (editorFields.css.ts) as an entry's title is, and beside a name of the person's own
+				   the way back to its entries' titles. */
 				> .title {
 					display: flex;
 					align-items: center;
 					gap: 0.25rem;
-					margin: 0.25rem -0.25rem 0.5rem;
+					margin-block: 0.25rem 0.5rem;
 				}
 
 				> .title > .name {
-					all: unset;
 					flex: 1;
 					min-inline-size: 0;
-					padding: 0.125rem 0.25rem;
-					border-radius: var(--border-radius);
+					/* Overhangs at the start by its padding, so its words line up with the rows'. */
+					margin-inline-start: calc(-1 * var(--field-padding-inline));
 					font-size: 1.1rem;
 					font-weight: 600;
 					color: var(--color-text);
-
-					&:hover, &:focus {
-						background: color-mix(in srgb, var(--color-text) 6%, transparent);
-					}
 				}
 
 				> .row {
@@ -239,13 +250,6 @@ export class RoutineDetails extends Component {
 						margin-inline-start: auto;
 						color: var(--color-text-muted);
 					}
-				}
-
-				> hr {
-					inline-size: 100%;
-					margin: 0.25rem 0;
-					border: 0;
-					border-block-start: var(--border);
 				}
 
 				> .year {
@@ -290,22 +294,26 @@ export class RoutineDetails extends Component {
 					}
 				}
 
+				/* The tiles take what their words need; the streak's takes the rest, room for its flame. They wrap where even
+				   that is too wide, as in a phone's sheet. */
 				> .stats {
-					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+					display: flex;
+					flex-wrap: wrap;
 					gap: 0.5rem;
 					margin-block: 0.5rem 0.25rem;
 
 					> div {
+						flex: none;
 						display: flex;
 						flex-direction: column;
 						padding: 0.5rem 0.6rem;
 						border-radius: var(--border-radius);
 						background: color-mix(in srgb, var(--color-text) 5%, transparent);
 
+						/* The text's own colour, see-through, so a tinted tile shows through it as a grey would not. */
 						> .label, > .sub {
 							font-size: 0.7rem;
-							color: var(--color-text-muted);
+							color: color-mix(in srgb, var(--color-text) 62%, transparent);
 						}
 
 						> .value {
@@ -313,6 +321,82 @@ export class RoutineDetails extends Component {
 							font-weight: 600;
 						}
 					}
+
+					/* The streak, first and in its calendar's colour: the word its label, the count its value, and a large flame
+					   behind them at its end, cut by its edges. Grey once it ended. */
+					> .streak {
+						flex: 1 1 8rem;
+						position: relative;
+						overflow: clip;
+						isolation: isolate;
+						background: color-mix(in srgb, var(--mitra-entry-segment-color) 14%, transparent);
+
+						> mitra-icon {
+							position: absolute;
+							z-index: -1;
+							inset-inline-end: -0.9rem;
+							inset-block-end: -0.9rem;
+							font-size: 4.5rem;
+							color: color-mix(in srgb, var(--mitra-entry-segment-color) 45%, transparent);
+							--mitra-icon-fill: color-mix(in srgb, var(--mitra-entry-segment-color) 18%, transparent);
+							--mitra-icon-stroke-width: 1.5;
+						}
+
+						&[data-out] {
+							background: color-mix(in srgb, var(--color-text) 5%, transparent);
+
+							> mitra-icon {
+								color: color-mix(in srgb, var(--color-text-muted) 45%, transparent);
+								--mitra-icon-fill: none;
+							}
+						}
+					}
+				}
+			}
+
+			/* One date: solid kept, hollow missed, a dash cancelled, ringed while today's is open, faint where there is none.
+			   Square and never smaller than 8px, so it reads as a cell rather than a smudge. */
+			.routine-cell {
+				display: block;
+				aspect-ratio: 1;
+				/* Radius and ring in whole screen pixels too, or their edges fall between pixels and soften. */
+				--ring: round(1.5px, ${devicePixel});
+				border-radius: round(2px, ${devicePixel});
+				background: var(--mitra-entry-segment-color);
+
+				&[data-state=missed] {
+					background: none;
+					box-shadow: inset 0 0 0 var(--ring) color-mix(in srgb, var(--mitra-entry-segment-color) 70%, transparent);
+				}
+
+				&[data-state=cancelled] {
+					position: relative;
+					background: none;
+
+					&::after {
+						content: '';
+						position: absolute;
+						inset: 40% 15%;
+						border-radius: 1px;
+						background: color-mix(in srgb, var(--mitra-entry-segment-color) 60%, transparent);
+					}
+				}
+
+				&[data-state=open] {
+					background: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, transparent);
+					box-shadow: inset 0 0 0 var(--ring) var(--mitra-entry-segment-color);
+				}
+
+				&[data-state=upcoming] {
+					background: color-mix(in srgb, var(--mitra-entry-segment-color) 12%, transparent);
+				}
+
+				&[data-state=none] {
+					background: color-mix(in srgb, var(--mitra-entry-segment-color) 10%, transparent);
+				}
+
+				&[data-state=future] {
+					visibility: hidden;
 				}
 			}
 		`
@@ -354,22 +438,42 @@ export class RoutineDetails extends Component {
 		`
 	}
 
+	/** The streak's tile: how it goes in a word, how many dates in a row, since when and the best, a flame behind. */
+	private get streakTemplate() {
+		const dates = RoutineStore.datesOf(this.routine!)!
+		const { streaks } = dates
+		const streak = streaks.at(-1)
+		if (!streak) {
+			return html.nothing
+		}
+		const best = Math.max(...streaks.map(({ length }) => length))
+		const since = streak.since?.dayIn(TimeZone.localOrDefault)
+		return html`
+			<div class="streak" ?data-out=${streak.out}>
+				<mitra-icon icon="flame"></mitra-icon>
+				<span class="label">${dates.standing.format()}</span>
+				<span class="value">${streak.out || !since ? t('Ended') : t('${count:number} in a row', { count: streak.length })}</span>
+				<span class="sub">
+					${streak.out || !since ? t('best ${count:number} in a row', { count: best }) : html`
+						${t('since ${date}', { date: dayOf(since.toString()).format({ month: 'short', day: 'numeric' }) })}<br>
+						${t('best ${count:number}', { count: best })}
+					`}
+				</span>
+			</div>
+		`
+	}
+
+	/** The streak, how it went over the past year, and where it slips. */
 	private get statsTemplate() {
 		const routine = this.routine!
 		const dates = RoutineStore.datesOf(routine)!
-		const { strip } = RoutineStore
 		const yearAgo = TimeZone.localOrDefault.dayOf(new Date()).subtract({ years: 1 })
 		const settled = dates.last(Infinity).filter(date => dates.statusOf(date)?.settled && Temporal.PlainDate.compare(date.dayIn(TimeZone.localOrDefault)!, yearAgo) > 0)
 		const kept = settled.filter(date => dates.statusOf(date) === RoutineEntryOccurrenceStatus.Kept).length
 		const slips = dates.slipsAfter(yearAgo)
-		const today = RoutineStore.todayOf(routine)
 		return html`
 			<div class="stats">
-				<div>
-					<span class="label">${t('Last ${count:number}', { count: dates.last(strip).length })}</span>
-					<span class="value">${t('${count:number} of ${total:number}', { count: dates.kept(strip), total: dates.settled(strip) })}</span>
-					<span class="sub">${today && dates.statusOf(today) === RoutineEntryOccurrenceStatus.Open ? t('today still open') : t('kept')}</span>
-				</div>
+				${this.streakTemplate}
 				${!settled.length ? html.nothing : html`
 					<div>
 						<span class="label">${t('Past year')}</span>
@@ -403,8 +507,7 @@ export class RoutineDetails extends Component {
 				<div class="routine-detail">
 					<header>
 						<span class="dot"></span>
-						<span>${source?.name}</span>
-						<span class="kind">${task ? t('Task') : t('Event')}</span>
+						<span class="calendar">${source?.name}</span>
 						<mitra-popover-container>
 							<mitra-icon-button label=${t('Options')} icon="more-horizontal"></mitra-icon-button>
 							<mitra-menu slot="popover">
@@ -427,13 +530,15 @@ export class RoutineDetails extends Component {
 										</mitra-menu>
 									</mitra-menu-item>
 								`}
+								<hr>
+								<mitra-menu-item type="checkbox" ?selected=${routine.tracked} @click=${this.handleTrack}>${t('Track how it goes')}</mitra-menu-item>
 								<mitra-menu-item icon="circle-off" @click=${this.handleDissolve}>${t('Not a routine')}</mitra-menu-item>
 							</mitra-menu>
 						</mitra-popover-container>
 						<mitra-icon-button icon="x" label=${t('Close')} @click=${() => this.hide()}></mitra-icon-button>
 					</header>
 					<div class="title">
-						<input class="name" aria-label=${t('Name')} .value=${routine.label} @change=${this.handleRename}
+						<input class="name field" aria-label=${t('Name')} .value=${routine.label} @change=${this.handleRename}
 							@keydown=${(e: KeyboardEvent) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}>
 						${!routine.name ? html.nothing : html`
 							<mitra-icon-button icon="undo-2" label=${t('Name after its entries')} title=${routine.titled} @click=${() => this.rename(null)}></mitra-icon-button>
@@ -449,9 +554,8 @@ export class RoutineDetails extends Component {
 							<span>${t('Since ${date}', { date: dayOf(routine.since).format({ dateStyle: 'long' }) })}</span>
 						</div>
 					`}
-					<hr>
 					${this.yearTemplate}
-					${this.statsTemplate}
+					${!routine.tracked ? html.nothing : this.statsTemplate}
 				</div>
 			</mitra-popover>
 		`

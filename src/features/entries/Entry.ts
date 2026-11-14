@@ -217,6 +217,12 @@ export class Entry extends Entity implements Validatable {
 	/** Taken out of every routine by its person, so recognition leaves it in none. */
 	@property({ type: 'boolean', nullable: true }) routineDeclined?: boolean
 
+	/** Leaves its routine, and joins none again by its title: the person said it is no part of one. */
+	declineRoutines() {
+		this.routineId = undefined
+		this.routineDeclined = true
+	}
+
 	get progress(): number | undefined {
 		return this.percentComplete === undefined ? undefined : this.percentComplete / 100
 	}

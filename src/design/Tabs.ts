@@ -372,11 +372,16 @@ export class Tab extends Component {
 				}
 
 				.badge {
-					margin-inline-start: 0.25rem;
+					margin-inline-start: 0.5rem;
 					font-size: 0.7rem;
 					font-weight: 500;
 					font-variant-numeric: tabular-nums;
 					opacity: 0.7;
+				}
+
+				/* A little more room after a name than after a bare glyph, opening with the name. */
+				&[data-compact] .badge {
+					margin-inline-start: calc(0.25rem + var(--mitra-tab-shown) * 0.25rem);
 				}
 
 				/* No width of its own, so a closed tab is its glyph: the name takes what the tab grew by. While the

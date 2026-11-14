@@ -80,7 +80,14 @@ await stage(async (browser, origin) => {
 		await shot(`planning-detail-${theme}`, false, { x: 0, y: 0, ...details.sidebar })
 		await click(browser, sidebarTab('routines'))
 		await waitFor(() => browser.evaluate<boolean>('return document.querySelectorAll("mitra-routine-row").length > 0'), 'the routines')
-		await shot(`routines-detail-${theme}`, false, { x: 0, y: 0, ...details.sidebar })
+		// The gym's detail open beside its row, as the release notes show it: down to its foot.
+		const gym = `[...document.querySelectorAll('mitra-routine-row')].find(row => row.querySelector('.name').textContent.includes(${JSON.stringify(sample('💪 Gym'))}))`
+		await browser.evaluate(`${gym}.scrollIntoView({ block: 'center' })`)
+		await click(browser, `${gym}.querySelector('.when')`)
+		await waitFor(() => browser.evaluate<boolean>('return !!document.querySelector("mitra-routine-details mitra-popover:popover-open .cells i")'), 'the gym\'s detail')
+		const bottom = await browser.evaluate<number>('return document.querySelector("mitra-routine-details mitra-popover").getBoundingClientRect().bottom')
+		await shot(`routines-detail-${theme}`, false, { x: 0, y: 0, width: details.sidebar.width, height: Math.round(Math.max(details.sidebar.height, bottom + 16)) })
+		await press(browser, ...keys.escape())
 		await click(browser, sidebarTab('calendars'))
 
 		await press(browser, ...keys.comma())

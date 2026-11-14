@@ -8,6 +8,7 @@ import { checkmark } from './checkmark.css.js'
 import { selectedColor } from './selected.css.js'
 import './Icon.js'
 import { scrollbar } from './scrollbar.css.js'
+import { separator } from './separator.css.js'
 import { optionRow, optionRowSelected } from './optionRow.css.js'
 import { disabled } from './disabled.css.js'
 
@@ -76,11 +77,7 @@ export class Menu extends Popover {
 			}
 
 			::slotted(hr) {
-				flex-shrink: 0;
-				inline-size: 100%;
-				margin: 0.25rem 0;
-				border: none;
-				border-block-start: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+				${separator};
 			}
 		`
 	}

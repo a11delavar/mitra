@@ -1,10 +1,17 @@
 ---
-title: Monitoraggio delle routine, Todoist, stato degli eventi e scadenze a colpo d'occhio
+title: Routine e serie, Todoist, stato degli eventi e scadenze a colpo d'occhio
 ---
 Mitra 0.8 ti aiuta a mantenere le cose che fai ancora e ancora, e tiene traccia di ciò che non è successo.
 
-## Monitoraggio delle routine
-Mitra raccoglie già in routine le cose che fai spesso, come la palestra o un taglio di capelli ogni cinque settimane. Ora hanno un posto tutto loro, dove vedi a colpo d'occhio gli ultimi giorni di ogni routine: quanti ne hai rispettati e quali hai annullato o saltato. Puoi rinominare una routine, unirne due che vanno insieme, o dire a Mitra che qualcosa non è una routine. Le routine restano anche stabili nelle viste mese e anno, per quanto tu scorra, e il tuo connettore IA può dirti come stanno andando.
+## Routine e serie
+Mitra raccoglie già in routine le cose che fai spesso, come la palestra o un taglio di capelli ogni cinque settimane. Ora hanno un posto tutto loro, dove una fiamma mostra a colpo d'occhio la serie di ogni routine, e il suo dettaglio i giorni che hai rispettato, annullato o saltato. Puoi rinominare una routine, unirne due che vanno insieme, o dire a Mitra che qualcosa non è una routine. Le routine restano anche stabili nelle viste mese e anno, per quanto tu scorra, e il tuo connettore IA può dirti come stanno andando.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
+	<img src="routines-light.webp" alt="La scheda Routine accanto alla vista mese, ogni routine con la sua serie, con il dettaglio della palestra aperto accanto">
+</picture>
+
+Documentazione: [Routine](../../docs/routines.md)
 
 ## Stessa ora ovunque
 Alcune cose non dipendono dal tuo fuso orario: la medicina delle 7:30 si prende alle 7:30, a casa come in viaggio. Scegli **Stessa ora ovunque** in cima ai fusi orari di una voce, e resta a quell'ora ovunque tu sia, segnata da un globo barrato. Anche le voci che arrivano da altre app senza fuso orario lo mostrano. Prima che tu ne sposti una in un calendario che non ha orari così, come Google Calendar, Mitra ti avvisa che riceverà un fuso orario fisso.

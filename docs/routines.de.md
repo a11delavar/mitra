@@ -35,14 +35,14 @@ Wie oft eine Routine vorkommt, entscheidet, wie die Ansichten sie zeigen:
 
 ## Der Tab Routinen
 
-Öffne **Routinen** in der Seitenleiste, neben Kalender und Planung, oder tippe den Namen in die Befehlspalette. **Heute** zeigt die Routinen, die heute vorkommen, nach ihrer Uhrzeit, und **Später** die übrigen, nach ihrem nächsten Termin. Jede Zeile zeigt den Namen der Routine, wann sie vorkommt, und einen Streifen ihrer letzten 14 Wiederholungen, mit der Zahl derer, die du eingehalten hast.
+Öffne **Routinen** in der Seitenleiste, neben Kalender und Planung, oder tippe den Namen in die Befehlspalette. **Heute** zeigt die Routinen, die heute vorkommen, nach ihrer Uhrzeit, und **Später** die übrigen, nach ihrem nächsten Termin. Jede Zeile zeigt den Namen der Routine, wann sie vorkommt, und ihre Serie: eine Flamme in der Farbe ihres Kalenders mit der Zahl der Wiederholungen, die du in Folge eingehalten hast. Eine verpasste oder abgesagte beendet die Serie, und die Flamme wird grau.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
-  <img src="../assets/screenshots/routines-detail-light.webp" alt="Der Tab Routinen in der Seitenleiste, jede Routine mit ihren letzten Wiederholungen und wie viele eingehalten wurden" />
+  <img src="../assets/screenshots/routines-detail-light.webp" alt="Der Tab Routinen in der Seitenleiste, jede Routine mit ihrer Serie, daneben die Details des Fitnessstudios" />
 </picture>
 
-Jedes Feld des Streifens ist eine Wiederholung:
+Die Details einer Routine zeigen ihre letzten Wochen als Raster, ein Feld pro Tag:
 
 - Ein volles Feld wurde eingehalten: ein Termin, der stattgefunden hat, oder eine Aufgabe, die du abgehakt hast.
 - Ein hohles Feld wurde verpasst: eine Aufgabe, die nach ihrem Tag offen geblieben ist.
@@ -56,11 +56,13 @@ Der heutige Status steht am Ende der Zeile einer Routine: bei einer Aufgabe ihr 
 
 ## Die Details einer Routine
 
-Klick auf eine Zeile, um mehr zu sehen: seit wann die Routine läuft, ihre letzten Wochen als Raster von Tagen, wie viele der letzten und des vergangenen Jahres du eingehalten hast und an welchem Wochentag sie am ehesten ausfällt. Ihr Menü **⋯** bietet **Heute erledigt** für eine Aufgabe, **Abgebrochen**, um die heutige Wiederholung abzusagen, und **Im Kalender zeigen**, um die nächste zu öffnen.
+Klick auf eine Zeile, um mehr zu sehen: seit wann die Routine läuft, ihre letzten Wochen als Raster von Tagen und darunter drei Kacheln: ihre Serie, überschrieben mit einem Wort, wie es läuft, etwa **Auf Kurs** oder **Lässt nach**, mit deinem Bestwert; wie viel des vergangenen Jahres du eingehalten hast; und an welchem Wochentag sie am ehesten ausfällt. Ihr Menü **⋯** bietet **Heute erledigt** für eine Aufgabe, **Abgebrochen**, um die heutige Wiederholung abzusagen, und **Im Kalender zeigen**, um die nächste zu öffnen. Entferne dort den Haken bei **Verlauf verfolgen** für eine Routine, die du nur einhältst, statt sie zu pflegen, etwa eine Rechnung oder ein Meeting: Sie zeigt dann keine Serie und in ihren Details nur das Raster.
 
 ## Eine Routine korrigieren
 
-Mitra findet Routinen von selbst, und das Menü **⋯** in den Details korrigiert es, wo es sich geirrt hat. **Umbenennen…** gibt der Routine einen eigenen Namen; du kannst auch auf ihren Namen klicken und tippen. Die Schaltfläche neben einem eigenen Namen, oder den Titel ihrer Einträge wieder eintippen, benennt sie wieder nach ihren Einträgen. **Zusammenführen mit** öffnet die anderen Routinen desselben Kalenders; eine davon fügt die beiden zusammen, für eine Gewohnheit mit zwei Titeln, etwa „Tabletten morgens“ und „Tabletten abends“. **Keine Routine** nimmt sie dauerhaft aus dem Tab: Einträge mit ihrem Titel werden nicht mehr zu einer Routine zusammengefasst und bleiben in deinem Kalender.
+Mitra findet Routinen von selbst, und das Menü **⋯** in den Details korrigiert es, wo es sich geirrt hat. **Umbenennen…** gibt der Routine einen eigenen Namen; du kannst auch auf ihren Namen klicken und tippen. Die Schaltfläche neben einem eigenen Namen, oder den Titel ihrer Einträge wieder eintippen, benennt sie wieder nach ihren Einträgen. **Zusammenführen mit** öffnet die anderen Routinen desselben Kalenders; eine davon fügt die beiden zusammen, für eine Gewohnheit mit zwei Titeln, etwa „Tabletten morgens“ und „Tabletten abends“. **Keine Routine** nimmt sie dauerhaft aus dem Tab: Einträge mit ihrem Titel werden nicht mehr zu einer Routine zusammengefasst und bleiben in deinem Kalender. Was du als keine Routine markiert hast, wartet zusammengeklappt am Ende des Tabs unter **Keine Routinen**; dort machst du es wieder zur Routine.
+
+Der Editor eines Eintrags hat nach seinen Daten eine Zeile **Routine**, die erscheint, wenn der Eintrag zu einer Routine gehört oder gehören könnte. Wähle dort eine andere Routine seines Kalenders, **Neue Routine**, um eine aus dem Eintrag zu beginnen, der spätere Einträge mit seinem Titel beitreten, oder **Keine Routine**, um ihn dauerhaft herauszunehmen, etwa ein Mittagessen, das nur den Titel mit einer Gewohnheit teilt. Die Zeile zeigt neben dem Namen die Serie der Routine.
 
 ## Eine Routine nutzen
 

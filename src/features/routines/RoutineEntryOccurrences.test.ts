@@ -57,6 +57,20 @@ describe('RoutineEntryOccurrences, read off RoutineEntries', () => {
 		assert.deepEqual(read(dates, dates.last(3)), ['2026-10-17 kept', '2026-10-18 missed', '2026-10-19 open'])
 	})
 
+	it('runs its streak to the last settled date, a cancelled one ending it as a missed one does, today\'s open one left out', () => {
+		const dates = of(
+			task('2026-10-14T06:00:00Z', { status: EntryStatus.Done }),
+			task('2026-10-15T06:00:00Z', { status: EntryStatus.Cancelled }),
+			task('2026-10-16T06:00:00Z', { status: EntryStatus.Done }),
+			task('2026-10-17T06:00:00Z', { status: EntryStatus.Done }),
+			task('2026-10-18T06:00:00Z', { status: EntryStatus.Done }),
+			task('2026-10-19T06:00:00Z'),
+		)
+		const streak = dates.streaks.at(-1)!
+		assert.deepEqual([dates.streaks.map(({ length }) => length), String(streak.since!.dayIn(berlin))], [[1, 3], '2026-10-16'])
+		assert.equal(String(dates.standing), 'back-on-track')
+	})
+
 	it('tells the weekday it slips on only from three missed or cancelled dates', () => {
 		const sundays = ['2026-09-27', '2026-10-04', '2026-10-11'].map(day => task(`${day}T06:00:00Z`))
 		const mondays = ['2026-09-28', '2026-10-05', '2026-10-12'].map(day => task(`${day}T06:00:00Z`, { status: EntryStatus.Done }))

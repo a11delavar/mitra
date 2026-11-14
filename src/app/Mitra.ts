@@ -58,8 +58,10 @@ import { EntryDetailsSharing } from '#features/entries/client/EntryDetailsSharin
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { RoutinesTab } from '#features/routines/client/RoutinesTab.js'
 import { RoutineRow } from '#features/routines/client/RoutineRow.js'
+import { RoutineFlame } from '#features/routines/client/RoutineFlame.js'
 import { RoutineDetails } from '#features/routines/client/RoutineDetails.js'
 import { DialogDissolveRoutine } from '#features/routines/client/DialogDissolveRoutine.js'
+import { RoutineField } from '#features/routines/client/RoutineField.js'
 import { ScrollDeviceController } from '#features/calendar/client/ScrollDeviceController.js'
 import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
@@ -235,8 +237,10 @@ export class Mitra extends Application {
 			${Planning.styles}
 			${RoutinesTab.styles}
 			${RoutineRow.styles}
+			${RoutineFlame.styles}
 			${RoutineDetails.styles}
 			${DialogDissolveRoutine.styles}
+			${RoutineField.styles}
 			${Weeks.styles}
 			${Months.styles}
 			${Days.styles}

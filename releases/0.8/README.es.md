@@ -1,10 +1,17 @@
 ---
-title: Seguimiento de rutinas, Todoist, estado de eventos y vencimientos de un vistazo
+title: Rutinas y rachas, Todoist, estado de eventos y vencimientos de un vistazo
 ---
 Mitra 0.8 te ayuda a mantener las cosas que haces una y otra vez, y guarda constancia de lo que no llegó a pasar.
 
-## Seguimiento de rutinas
-Mitra ya agrupa en rutinas lo que haces a menudo, como ir al gimnasio o cortarte el pelo cada cinco semanas. Ahora tienen un lugar propio, donde ves de un vistazo los últimos días de cada rutina: cuántos cumpliste y cuáles cancelaste o te saltaste. Puedes cambiar el nombre de una rutina, unir dos que van juntas o decirle a Mitra que algo no es una rutina. Las rutinas también se mantienen estables en las vistas de mes y año por mucho que te desplaces, y tu conector de IA puede decirte cómo van.
+## Rutinas y rachas
+Mitra ya agrupa en rutinas lo que haces a menudo, como ir al gimnasio o cortarte el pelo cada cinco semanas. Ahora tienen un lugar propio, donde una llama muestra de un vistazo la racha de cada rutina, y su detalle los días que cumpliste, cancelaste o te saltaste. Puedes cambiar el nombre de una rutina, unir dos que van juntas o decirle a Mitra que algo no es una rutina. Las rutinas también se mantienen estables en las vistas de mes y año por mucho que te desplaces, y tu conector de IA puede decirte cómo van.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
+	<img src="routines-light.webp" alt="La pestaña Rutinas junto a la vista de mes, cada rutina con su racha, con el detalle del gimnasio abierto al lado">
+</picture>
+
+Docs: [Rutinas](../../docs/routines.md)
 
 ## La misma hora en todas partes
 Algunas cosas no dependen de tu zona horaria: la medicación de las 7:30 es a las 7:30, en casa o de viaje. Elige **La misma hora en todas partes** al principio de las zonas horarias de una entrada, y se queda a esa hora estés donde estés, marcada con un globo tachado. Las entradas que llegan de otras aplicaciones sin zona horaria también lo muestran. Antes de que muevas una a un calendario que no tiene esas horas, como Google Calendar, Mitra te avisa de que recibirá una zona horaria fija.

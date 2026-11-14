@@ -1,16 +1,16 @@
 import { Component, component, css, eventListener, html, property, state } from '@a11d/lit'
-import { devicePixel } from '#design'
+import { contrastColorOf } from '#design'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import type { Entry } from '#features/entries'
 import { EntryStore, reportSaveError } from '#features/entries/client/EntryStore.js'
 import { type Routine } from '../Routine.js'
 import { RoutineStore } from './RoutineStore.js'
-import { cellStep } from './cellStep.css.js'
+import './RoutineFlame.js'
 import './RoutineDetails.js'
 
 /**
  * One routine in the sidebar's tab, a card in its calendar's colour: its name, how often it comes, today's tick for a task,
- * and a strip of its last occurrences with how many were kept. A click opens its detail beside it.
+ * and its streak. A click opens its detail beside it.
  */
 @component('mitra-routine-row')
 export class RoutineRow extends Component {
@@ -61,8 +61,7 @@ export class RoutineRow extends Component {
 				grid-template-columns: minmax(0, 1fr) auto;
 				grid-template-areas:
 					'name tick'
-					'when tick'
-					'strip ratio';
+					'when flame';
 				align-items: center;
 				column-gap: 0.5rem;
 				padding: 0.4rem 0.5rem 0.45rem 0.6rem;
@@ -76,14 +75,32 @@ export class RoutineRow extends Component {
 				anchor-name: --mitra-routine-details;
 				anchor-scope: --mitra-routine-details;
 
+				/* Today's checkbox is taller than the name's line; the rows part a little, so it and the flame below don't touch. */
+				&:has(> mitra-entry-status) {
+					row-gap: 0.3rem;
+				}
+
 				&:hover {
 					background: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, var(--color-background));
 				}
 
+				/* Open, it is filled in its calendar's colour with ink that reads on it, as an entry is while its editor is open. */
 				&[data-open] {
-					/* Inside the card, so the tab's scroller needs no room around it to show it. */
-					outline: 2px solid var(--mitra-entry-segment-color);
-					outline-offset: -2px;
+					background: var(--mitra-entry-segment-color);
+					${contrastColorOf('color', 'var(--mitra-entry-segment-color)')};
+
+					> .when {
+						color: color-mix(in srgb, currentColor 75%, transparent);
+					}
+
+					> mitra-routine-flame {
+						color: inherit;
+
+						> mitra-icon {
+							color: currentColor;
+							--mitra-icon-fill: color-mix(in srgb, currentColor 25%, transparent);
+						}
+					}
 				}
 
 				> .name {
@@ -95,23 +112,12 @@ export class RoutineRow extends Component {
 					text-overflow: ellipsis;
 				}
 
-				/* The rule gives way before the time does. */
+				/* The rule wraps where it is long, the time kept with its last word. */
 				> .when {
 					grid-area: when;
-					display: flex;
 					min-inline-size: 0;
 					color: color-mix(in srgb, var(--mitra-entry-segment-color) 30%, var(--color-text-muted));
-					white-space: nowrap;
-
-					> .rule {
-						min-inline-size: 0;
-						overflow: hidden;
-						text-overflow: ellipsis;
-					}
-
-					> .at {
-						flex: none;
-					}
+					text-wrap: pretty;
 				}
 
 				> mitra-entry-status, > .time {
@@ -135,73 +141,11 @@ export class RoutineRow extends Component {
 					opacity: 0.8;
 				}
 
-				> .strip {
-					grid-area: strip;
-					margin-block-start: 0.35rem;
-					--gap: round(down, 2px, ${devicePixel});
-					display: grid;
-					/* The gap is each cell's own margin inside its step. */
-					grid-template-columns: repeat(14, ${cellStep});
-					justify-content: start;
-
-					> .routine-cell {
-						margin-inline-end: var(--gap);
-					}
-				}
-
-				> .ratio {
-					grid-area: ratio;
-					margin-block-start: 0.35rem;
-					font-weight: 500;
-					font-variant-numeric: tabular-nums;
-					white-space: nowrap;
+				/* Level with the rule's last line, however many it wraps to. */
+				> mitra-routine-flame {
+					grid-area: flame;
+					align-self: end;
 					justify-self: end;
-				}
-			}
-
-			/* One date: solid kept, hollow missed, a dash cancelled, ringed while today's is open, faint where there is none.
-			   Square and never smaller than 8px, so it reads as a cell rather than a smudge. */
-			.routine-cell {
-				display: block;
-				aspect-ratio: 1;
-				/* Radius and ring in whole screen pixels too, or their edges fall between pixels and soften. */
-				--ring: round(1.5px, ${devicePixel});
-				border-radius: round(2px, ${devicePixel});
-				background: var(--mitra-entry-segment-color);
-
-				&[data-state=missed] {
-					background: none;
-					box-shadow: inset 0 0 0 var(--ring) color-mix(in srgb, var(--mitra-entry-segment-color) 70%, transparent);
-				}
-
-				&[data-state=cancelled] {
-					position: relative;
-					background: none;
-
-					&::after {
-						content: '';
-						position: absolute;
-						inset: 40% 15%;
-						border-radius: 1px;
-						background: color-mix(in srgb, var(--mitra-entry-segment-color) 60%, transparent);
-					}
-				}
-
-				&[data-state=open] {
-					background: color-mix(in srgb, var(--mitra-entry-segment-color) 25%, transparent);
-					box-shadow: inset 0 0 0 var(--ring) var(--mitra-entry-segment-color);
-				}
-
-				&[data-state=upcoming] {
-					background: color-mix(in srgb, var(--mitra-entry-segment-color) 12%, transparent);
-				}
-
-				&[data-state=none] {
-					background: color-mix(in srgb, var(--mitra-entry-segment-color) 10%, transparent);
-				}
-
-				&[data-state=future] {
-					visibility: hidden;
 				}
 			}
 		`
@@ -220,34 +164,21 @@ export class RoutineRow extends Component {
 		if (!routine || !dates) {
 			return html.nothing
 		}
-		const { strip } = RoutineStore
-		const last = dates.last(strip)
-		// Each with its date and what became of it, as its tooltip.
-		const cells = [
-			...Array.from({ length: strip - last.length }, () => ({ state: 'none', title: '' })),
-			...last.map(date => ({ state: String(dates.statusOf(date)), title: `${(date.start ?? date.due)!.format({ dateStyle: 'medium' })} · ${dates.statusOf(date)!.format()}` })),
-		]
 		const rule = RoutineStore.ruleOf(routine)
 		const { next } = dates
 		const time = RoutineStore.timeOf(routine)
-		const kept = dates.kept(strip)
-		const of = dates.settled(strip)
 		// Today's status where it can be changed: a task's whatever became of it, an event's once it was called off.
 		const today = RoutineStore.onToday(routine)
 		const changeable = !!today && (RoutineStore.isTask(routine) ? RoutineStore.ticks(routine) : today.entry.cancelled && RoutineStore.cancels(routine))
 		return html`
 			<span class="name" title=${routine.label}>${routine.label}</span>
 			<span class="when">
-				<span class="rule">${routine.frequency(rule, next?.start)}</span>
-				${!time ? html.nothing : html`<span class="at">&nbsp;· ${time}</span>`}
+				<span class="rule">${routine.frequency(rule, next?.start)}</span>${!time ? html.nothing : html`<span class="at">&nbsp;·&nbsp;${time}</span>`}
 			</span>
 			${!today ? html.nothing : changeable ? html`
 				<mitra-entry-status .entry=${this.tickEntry} @pointerdown=${this.claim} @keydown=${this.claim} @change=${this.handleTick}></mitra-entry-status>
 			` : RoutineStore.isTask(routine) ? html.nothing : html`<span class="time">${time ?? ''}</span>`}
-			<span class="strip">${cells.map(({ state, title }) => html`<i class="routine-cell" data-state=${state} title=${title}></i>`)}</span>
-			<span class="ratio" title=${t('${count:number} of ${total:number} kept', { count: kept, total: of })}>
-				${t('${count:number} of ${total:number}', { count: kept, total: of })}
-			</span>
+			<mitra-routine-flame .routine=${routine}></mitra-routine-flame>
 			${!this.open ? html.nothing : html`
 				<mitra-routine-details .routine=${routine} @close=${() => this.open = false}></mitra-routine-details>
 			`}
