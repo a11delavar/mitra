@@ -293,6 +293,22 @@ describe('CalDAV sync lists a calendar that refuses sync-collection by its etags
 		assert.deepEqual(fetched, [`${COLLECTION}bare.ics`])
 	})
 
+	for (const failure of [403, 405, 501]) {
+		it(`lists by etags a calendar answering ${failure}, as some Google calendars do`, async () => {
+			const [kept, gone] = [fetchedEntry('kept', 'etag-1'), fetchedEntry('gone', 'etag-1')]
+			const { em, propfinds } = await sync([{ members: [], failure }], [kept, gone], undefined, [{ href: '/cal/kept.ics', etag: 'etag-1' }])
+			assert.equal(propfinds, 1)
+			assert.deepEqual(em.removed, [gone])
+		})
+	}
+
+	it('removes what the listing leaves out though a token was stored, and drops the token the server refused', async () => {
+		const [kept, gone] = [fetchedEntry('kept', 'etag-1'), fetchedEntry('gone', 'etag-1')]
+		const { em, source } = await sync([{ members: [], failure: 403 }], [kept, gone], 'token-0', [{ href: '/cal/kept.ics', etag: 'etag-1' }])
+		assert.deepEqual(em.removed, [gone])
+		assert.deepEqual(source.syncState, { syncToken: undefined })
+	})
+
 	it('deletes nothing and leaves the import open when the listing by etags fails too', async () => {
 		const entries = [fetchedEntry('a', 'etag-1'), fetchedEntry('b', 'etag-1')]
 		const { em, source, changed, fetched } = await sync(refused, entries, undefined, { failure: 403 })
