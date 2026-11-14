@@ -20,7 +20,7 @@ Paleta poleceń zna te same słowa i zmienia większość ustawień bez otwieran
 
 ## Twoje konto czy to urządzenie
 
-Większość ustawień należy do twojego konta i towarzyszy ci na każdym urządzeniu i w każdej przeglądarce, w której się logujesz: język, domyślny widok, **Ukryj gotowe zadania**, **Ukryj anulowane**, **Ukryj dostępność**, domyślny kalendarz, domyślny czas trwania, **Przyciągaj do** i oba domyślne przypomnienia.
+Większość ustawień należy do twojego konta i towarzyszy ci na każdym urządzeniu i w każdej przeglądarce, w której się logujesz: język, domyślny widok, **Ukryj gotowe zadania**, **Ukryj anulowane**, **Ukryj dostępność**, domyślny kalendarz, domyślny czas trwania, **Przyciągaj do**, oba domyślne przypomnienia i twój **Własny CSS**.
 
 Pozostałe należą do urządzenia, z którego korzystasz, więc na telefonie i laptopie mogą się różnić: motyw, linie połączeń oraz to, czy ta przeglądarka pokazuje powiadomienia.
 
@@ -33,6 +33,8 @@ Mitra zapamiętuje też na każdym urządzeniu kilka rzeczy, gdy z niej korzysta
 **Język** oferuje angielski, niemiecki, francuski, hiszpański, portugalski, włoski, perski, chiński, polski, niderlandzki, arabski i rosyjski, każdy pod nazwą we własnym języku; chiński jest zapisywany znakami uproszczonymi. Zmiana działa od razu, bez przeładowania strony, a po wybraniu perskiego lub arabskiego Mitra układa interfejs od prawej do lewej.
 
 Każdy język decyduje też o tym, jak wyglądają daty i godziny, od którego dnia zaczyna się tydzień i które dni są weekendem. Na początku obowiązuje zapis, jakiego dla danego języka używa twoja przeglądarka, więc angielski zwykle wygląda jak w Stanach Zjednoczonych, niemiecki jak w Niemczech, a perski jak w Iranie. Strzałka na końcu wiersza języka rozwija listę krajów i regionów, w których się go używa, na przykład Wielkiej Brytanii lub Europy dla angielskiego: angielski dla Wielkiej Brytanii zapisuje 9 Oct 2026 i 13:00, a tydzień zaczyna od poniedziałku, natomiast dla Stanów Zjednoczonych zapisuje Oct 9, 2026 i 1:00 PM, a tydzień zaczyna od niedzieli. Gdy przełączasz język z palety poleceń, Mitra zachowuje twój kraj, jeśli nowy język jest w nim używany. Podgląd pod ustawieniem pokazuje, jak wyglądają daty, godziny, tydzień, liczby i nazwy stref czasowych. Kraj nie jest tutaj strefą czasową: Nowy Jork i Los Angeles leżą w jednym kraju.
+
+**Własny CSS** zmienia wygląd aplikacji Mitra twoim własnym CSS-em, stosowanym w trakcie pisania i zapisanym na twoim koncie. Przełącznik obok wyłącza go bez utraty treści. Co można z nim zrobić, opisuje strona [Własny CSS](custom-css.md). Tam, gdzie loguje się wiele osób, administrator znajdzie też w **Administracja** ustawienie **Własny CSS dla wszystkich**, które zmienia wygląd aplikacji Mitra dla wszystkich na serwerze.
 
 ## Kalendarz
 

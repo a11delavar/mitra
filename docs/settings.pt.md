@@ -20,7 +20,7 @@ A paleta de comandos conhece as mesmas palavras e altera a maioria das configura
 
 ## Sua conta ou este dispositivo
 
-A maioria das configurações pertence à sua conta e acompanha você em todos os dispositivos e navegadores em que entra: o idioma, a vista padrão, **Ocultar tarefas concluídas**, **Ocultar cancelados**, **Ocultar disponibilidade**, o calendário padrão, a duração padrão, **Ajustar a** e os dois lembretes padrão.
+A maioria das configurações pertence à sua conta e acompanha você em todos os dispositivos e navegadores em que entra: o idioma, a vista padrão, **Ocultar tarefas concluídas**, **Ocultar cancelados**, **Ocultar disponibilidade**, o calendário padrão, a duração padrão, **Ajustar a**, os dois lembretes padrão e o seu **CSS personalizado**.
 
 As outras pertencem ao dispositivo em que você está, então seu celular e seu notebook podem diferir: o tema, as linhas de conexão e se este navegador mostra notificações.
 
@@ -33,6 +33,8 @@ O Mitra também lembra algumas coisas em cada dispositivo conforme você usa: o 
 **Idioma** oferece English, Deutsch, Français, Español, Português, Italiano, فارسی, 中文, Polski, Nederlands, العربية e Русский, cada um nomeado no próprio idioma; o chinês é escrito em caracteres simplificados. A mudança vale na hora, sem recarregar, e tanto o persa quanto o árabe dispõem o Mitra da direita para a esquerda.
 
 Cada idioma também decide como datas e horas são escritas, em que dia a semana começa e quais dias são fim de semana. No início ele segue como o seu navegador escreve o idioma, então o inglês costuma ser escrito como nos Estados Unidos, o alemão como na Alemanha e o persa como no Irã. A seta no fim de um idioma mostra os países e áreas onde ele é escrito, como o Reino Unido ou a Europa para o inglês: o inglês do Reino Unido escreve 9 Oct 2026 e 13:00 e começa as semanas na segunda, o dos Estados Unidos escreve Oct 9, 2026 e 1:00 PM e as começa no domingo. Ao trocar de idioma pela paleta de comandos, o seu país se mantém se o novo idioma é escrito lá. Uma prévia abaixo da configuração mostra como datas, horas, a semana, números e os nomes dos fusos horários aparecem. Um país aqui não é um fuso horário: Nova York e Los Angeles compartilham um.
+
+**CSS personalizado** muda a aparência do Mitra com o seu próprio CSS, aplicado enquanto você digita e guardado na sua conta. O interruptor ao lado o desliga sem perdê-lo. Veja [CSS personalizado](custom-css.md) para saber o que dá para fazer com ele. Onde as pessoas entram com uma conta, quem administra o servidor também encontra **CSS personalizado para todos** em **Administração**, que muda a aparência do Mitra para todos no servidor.
 
 ## Calendário
 

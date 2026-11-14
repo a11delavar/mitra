@@ -86,7 +86,7 @@ export class DialogWelcome extends DialogComponent<void, boolean | undefined> {
 							width: 2.25rem;
 							height: 2.25rem;
 							padding: 0.5625rem;
-							border-radius: 10px;
+							border-radius: calc(var(--border-radius) * 2.5);
 							background: color-mix(in srgb, var(--color-text) 5%, transparent);
 							color: var(--color-text-muted);
 						}

@@ -305,6 +305,7 @@ export class Days extends Component {
 						z-index: 2;
 					}
 					& > .header { background-color: var(--color-background); }
+					& > .header :is(.day, .month) { color: var(--color-text-muted); }
 				}
 
 				.all-day-corner {

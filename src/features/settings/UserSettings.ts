@@ -1,4 +1,5 @@
 import { calendarViews, type CalendarView } from '#features/calendar/CalendarView.js'
+import { Stylesheet } from '#features/customization/Stylesheet.js'
 
 /**
  * Persisted contract for user preferences (`User.settings`).
@@ -23,6 +24,10 @@ export class UserSettings {
 	hideAvailability?: boolean
 	/** The language the app is shown in and the region it is written in (a BCP 47 tag: `fa`, `en-GB`), on every device. */
 	locale?: string
+	/** The account's own stylesheet over Mitra's, without `@import`. */
+	customCss?: string
+	/** Whether the account's stylesheet is worn, stored only when it is turned off. */
+	customCssEnabled?: boolean
 
 	/**
 	 * Sanitizes user settings input, dropping unknown keys and out-of-range values.
@@ -66,6 +71,13 @@ export class UserSettings {
 			} catch {
 				// Not a BCP 47 tag: left out like any other value out of range.
 			}
+		}
+		const css = Stylesheet.sanitize(incoming.customCss)
+		if (css) {
+			settings.customCss = css
+		}
+		if (incoming.customCssEnabled === false) {
+			settings.customCssEnabled = false
 		}
 		return Object.keys(settings).length ? settings : undefined
 	}

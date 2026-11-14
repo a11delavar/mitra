@@ -20,7 +20,7 @@ Die Befehlspalette kennt dieselben Wörter und ändert die meisten Einstellungen
 
 ## Dein Konto oder dieses Gerät
 
-Die meisten Einstellungen gehören zu deinem Konto und folgen dir auf jedes Gerät und in jeden Browser, in dem du dich anmeldest: die Sprache, die Standardansicht, **Erledigte Aufgaben ausblenden**, **Abgebrochenes ausblenden**, **Verfügbarkeit ausblenden**, der Standardkalender, die Standarddauer, **Einrasten auf** und beide Standarderinnerungen.
+Die meisten Einstellungen gehören zu deinem Konto und folgen dir auf jedes Gerät und in jeden Browser, in dem du dich anmeldest: die Sprache, die Standardansicht, **Erledigte Aufgaben ausblenden**, **Abgebrochenes ausblenden**, **Verfügbarkeit ausblenden**, der Standardkalender, die Standarddauer, **Einrasten auf**, beide Standarderinnerungen und dein **Eigenes CSS**.
 
 Die anderen gehören zum Gerät, auf dem du gerade bist, sodass sich dein Handy und dein Laptop unterscheiden können: das Erscheinungsbild, die Verbindungslinien und ob dieser Browser Benachrichtigungen anzeigt.
 
@@ -33,6 +33,8 @@ Mitra merkt sich außerdem einiges pro Gerät, während du es benutzt: wie weit 
 **Sprache** bietet Englisch, Deutsch, Französisch, Spanisch, Portugiesisch, Italienisch, Persisch, Chinesisch, Polnisch, Niederländisch, Arabisch und Russisch an, jede in ihrer eigenen Sprache benannt; Chinesisch in vereinfachten Schriftzeichen. Die Änderung gilt sofort, ohne neu zu laden, und Persisch und Arabisch richten Mitra von rechts nach links aus.
 
 Jede Sprache legt auch fest, wie Datum und Uhrzeit aussehen, an welchem Tag die Woche beginnt und welche Tage zum Wochenende gehören. Zunächst folgt sie der Schreibweise deines Browsers, sodass Englisch meist wie in den USA aussieht, Deutsch wie in Deutschland und Persisch wie im Iran. Der Pfeil am Ende einer Sprache klappt die Länder und Gebiete auf, in denen sie geschrieben wird, etwa das Vereinigte Königreich oder Europa für Englisch: Englisch für das Vereinigte Königreich schreibt 9 Oct 2026 und 13:00 und beginnt die Woche am Montag, für die USA schreibt es Oct 9, 2026 und 1:00 PM und beginnt am Sonntag. Wechselst du die Sprache über die Befehlspalette, bleibt dein Land, wenn die neue Sprache dort geschrieben wird. Eine Vorschau unter der Einstellung zeigt, wie Datum, Uhrzeit, Woche, Zahlen und die Namen der Zeitzonen aussehen. Ein Land ist hier keine Zeitzone: New York und Los Angeles teilen sich eines.
+
+**Eigenes CSS** gestaltet Mitra mit deinem eigenen CSS um, angewendet, während du tippst, und in deinem Konto gespeichert. Der Schalter daneben schaltet es aus, ohne es zu verlieren. Was du damit machen kannst, steht unter [Eigenes CSS](custom-css.md). Wo man sich anmeldet, findet, wer den Server verwaltet, unter **Verwaltung** außerdem **Eigenes CSS für alle**, das Mitra für alle auf dem Server umgestaltet.
 
 ## Kalender
 

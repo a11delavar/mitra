@@ -109,6 +109,8 @@
 	"OpenSettings.Keywords": "settings preferences options configure customize",
 	"SnapSetting.Keywords": "snap grid step granularity minutes drag resize",
 	"ThemeSetting.Keywords": "theme dark light mode colors appearance contrast",
+	"CustomCssSetting.Keywords": "css custom stylesheet style theme design appearance colors branding font look restyle",
+	"InstanceCssSetting.Keywords": "css custom stylesheet style theme design appearance colors branding font look restyle server everyone instance administration",
 	"Toggle.Off": "Off",
 	"Toggle.On": "On",
 	"CreateAvailability.Keywords": "new frame working hours focus deep work time block schedule shade",

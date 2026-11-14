@@ -64,6 +64,8 @@ import { DialogDissolveRoutine } from '#features/routines/client/DialogDissolveR
 import { RoutineField } from '#features/routines/client/RoutineField.js'
 import { ScrollDeviceController } from '#features/calendar/client/ScrollDeviceController.js'
 import { hierarchy } from '#features/relations/client/Hierarchy.js'
+import { CustomCss } from '#features/customization/client/CustomCss.js'
+import { CustomCssEditor } from '#features/customization/client/CustomCssEditor.js'
 import { DialogIntegration } from '#integrations/client/DialogIntegration.js'
 import { IcsSubscription } from '#integrations/ics/IcsSubscription.js'
 import '#integrations/demo/client/language.js'
@@ -104,6 +106,8 @@ export class Mitra extends Application {
 		const pendingIntegrationId = Mitra.consumePendingIntegrationParameter()
 		const subscribeUrl = consumeSubscribeParameter()
 		await Promise.all([Calendars.fetch(), session.fetchUser(), session.fetchInstance()])
+		// Before the router renders the calendar, so the account's stylesheet is worn from its first paint.
+		CustomCss.wearStored()
 		// After the integrations, so a linked language switches the sample calendar too.
 		LocaleSetting.followAccount()
 		LocaleSetting.rememberLinkedLanguage()
@@ -191,7 +195,13 @@ export class Mitra extends Application {
 		return id
 	}
 
+	/** In the document, Mitra's rules sit in one cascade layer, so a custom stylesheet, unlayered, wins whatever its selector. */
 	static override get styles() {
+		return css`@layer mitra { ${Mitra.rules} }`
+	}
+
+	/** Every light-DOM component's styles, unlayered: a dialog's shadow root wears them as they are. */
+	static get rules() {
 		return css`
 			${super.styles}
 
@@ -220,6 +230,10 @@ export class Mitra extends Application {
 			input, textarea, [contenteditable] {
 				user-select: text;
 				-webkit-user-select: text;
+			}
+
+			::selection {
+				background-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
 			}
 
 			${focusRingStyles}
@@ -269,6 +283,7 @@ export class Mitra extends Application {
 			${DialogKeyboardShortcuts.styles}
 			${DialogSettings.styles}
 			${SettingRow.styles}
+			${CustomCssEditor.styles}
 			${NotificationDevices.styles}
 			${DialogNewAccessToken.styles}
 			${DialogAccessToken.styles}

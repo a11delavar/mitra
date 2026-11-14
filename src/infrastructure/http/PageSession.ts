@@ -2,6 +2,7 @@ import { GetUser, GetMeta } from '#operations'
 import type { User } from '#features/identity'
 import { Instance } from '#features/about/Instance.js'
 import type { UserSettings } from '#features/settings/UserSettings.js'
+import type { InstanceSettings } from '#features/settings/InstanceSettings.js'
 import { PageState } from './PageState.js'
 
 /**
@@ -33,6 +34,17 @@ export class PageSession {
 		this.user = await answer
 		PageState.changed()
 		return this.user
+	}
+
+	/** What the instance's administrators set for everyone, none until the instance answers. */
+	get instanceSettings(): InstanceSettings {
+		return this.instance.settings ?? {}
+	}
+
+	/** Keeps what an administrator's change answers with as what holds for everyone. */
+	async keepInstanceSettings(answer: Promise<InstanceSettings>) {
+		this.instance.settings = await answer
+		PageState.changed()
 	}
 
 	/** Asks the server again; one that does not answer leaves what it said before. */

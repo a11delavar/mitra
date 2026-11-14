@@ -194,7 +194,7 @@ export class EntryDetailsComponent extends Component {
 					margin: 0 0.25rem;
 					padding: 0;
 					border: none;
-					border-radius: 0.5rem;
+					border-radius: calc(var(--border-radius) * 2);
 					background: none;
 					backdrop-filter: none;
 					box-shadow: 0px 24px 48px -8px rgba(0,0,0,0.48), 0px 4px 12px -1px rgba(0,0,0,0.24);
@@ -220,7 +220,7 @@ export class EntryDetailsComponent extends Component {
 					background: var(--mitra-entry-surface);
 					backdrop-filter: blur(10px);
 					border: var(--border);
-					border-radius: 0.5rem;
+					border-radius: calc(var(--border-radius) * 2);
 					overflow: clip;
 
 					/* A row turning up while it is open grows into place, and the editor with it, which its rows size. Not
@@ -230,7 +230,8 @@ export class EntryDetailsComponent extends Component {
 						animation: mitra-editor-arrived 0s 0.2s both;
 
 						@container style(--mitra-editor-arrived: true) {
-							li {
+							/* Never the description's lists: a ticked box renders it anew, which grew every item from nothing. */
+							li:not(mitra-markdown li) {
 								transition: block-size 0.2s cubic-bezier(0.2, 0, 0, 1), min-block-size 0.2s cubic-bezier(0.2, 0, 0, 1);
 								overflow-block: clip;
 								overflow-clip-margin: 2px;

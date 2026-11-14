@@ -322,4 +322,24 @@ describe('migrate', () => {
 			await orm.close()
 		}
 	})
+
+	it('makes the first account that signs in the administrator, else the local one, never a sandbox', async () => {
+		const roles = async (...users: Array<[username: string, issuer?: string]>) => {
+			const orm = await inMemoryOrm()
+			try {
+				const connection = orm.em.getConnection()
+				await orm.migrator.up({ to: 'Migration20261114184035_RoutineUntracked' })
+				for (const [username, issuer] of users) {
+					await connection.execute('insert into `user` (`id`, `username`, `oidc_issuer`) values (?, ?, ?)', [username, username, issuer ?? null])
+				}
+				await orm.migrator.up()
+				return Object.fromEntries((await connection.execute<Array<{ username: string, role: string }>>('select `username`, `role` from `user`')).map(({ username, role }) => [username, role]))
+			} finally {
+				await orm.close()
+			}
+		}
+		assert.deepEqual(await roles(['demo-1'], ['[default_local_user]'], ['person-1', 'https://idp.example.com'], ['person-2', 'https://idp.example.com']),
+			{ 'demo-1': 'member', '[default_local_user]': 'member', 'person-1': 'administrator', 'person-2': 'member' })
+		assert.deepEqual(await roles(['demo-1'], ['[default_local_user]']), { 'demo-1': 'member', '[default_local_user]': 'administrator' })
+	})
 })

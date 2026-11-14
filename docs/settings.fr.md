@@ -20,7 +20,7 @@ La palette de commandes connaît les mêmes mots et modifie la plupart des param
 
 ## Votre compte ou cet appareil
 
-La plupart des paramètres appartiennent à votre compte et vous suivent sur chaque appareil et chaque navigateur depuis lesquels vous vous connectez : la langue, la vue par défaut, **Masquer les tâches terminées**, **Masquer les éléments annulés**, **Masquer les disponibilités**, l'agenda par défaut, la durée par défaut, **Aligner sur** et les deux rappels par défaut.
+La plupart des paramètres appartiennent à votre compte et vous suivent sur chaque appareil et chaque navigateur depuis lesquels vous vous connectez : la langue, la vue par défaut, **Masquer les tâches terminées**, **Masquer les éléments annulés**, **Masquer les disponibilités**, l'agenda par défaut, la durée par défaut, **Aligner sur**, les deux rappels par défaut et votre **CSS personnalisé**.
 
 Les autres appartiennent à l'appareil que vous utilisez, si bien que votre téléphone et votre ordinateur portable peuvent différer : le thème, les lignes de connexion, et le fait que ce navigateur affiche ou non des notifications.
 
@@ -33,6 +33,8 @@ Mitra retient aussi certaines choses sur chaque appareil au fil de votre utilisa
 **Langue** propose l'anglais, l'allemand, le français, l'espagnol, le portugais, l'italien, le persan, le chinois, le polonais, le néerlandais, l'arabe et le russe, chacun nommé dans sa propre langue ; le chinois s'écrit en caractères simplifiés. Le changement s'applique immédiatement, sans rechargement, et le persan comme l'arabe disposent Mitra de droite à gauche.
 
 Chaque langue décide aussi de l'écriture des dates et des heures, du premier jour de la semaine et des jours du week-end. Au départ, elle suit la façon dont votre navigateur écrit la langue, si bien que l'anglais s'écrit le plus souvent comme aux États-Unis, l'allemand comme en Allemagne et le persan comme en Iran. La flèche au bout d'une langue déplie les pays et les zones où elle s'écrit, comme le Royaume-Uni ou l'Europe pour l'anglais : l'anglais du Royaume-Uni écrit 9 Oct 2026 et 13:00 et commence les semaines le lundi, celui des États-Unis écrit Oct 9, 2026 et 1:00 PM et les commence le dimanche. Un changement de langue depuis la palette de commandes garde votre pays si la nouvelle langue s'y écrit. Un aperçu sous le paramètre montre l'écriture des dates, des heures, de la semaine, des nombres et des noms de fuseaux. Un pays n'est pas ici un fuseau horaire : New York et Los Angeles en partagent un.
+
+**CSS personnalisé** modifie l'apparence de Mitra avec votre propre CSS, appliqué pendant que vous tapez et conservé dans votre compte. L'interrupteur à côté le désactive sans le perdre. Voir [CSS personnalisé](custom-css.md) pour ce que vous pouvez en faire. Là où l'on se connecte, un administrateur trouve aussi **CSS personnalisé pour tous** sous **Administration**, qui modifie l'apparence de Mitra pour tout le monde sur le serveur.
 
 ## Agenda
 

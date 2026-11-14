@@ -31,7 +31,7 @@ export class SettingRow extends Component {
 				padding-inline: 0.875rem;
 				/* A field's tint and hairline, which every control on the card already wears. */
 				border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-				border-radius: 8px;
+				border-radius: calc(var(--border-radius) * 2);
 				background: color-mix(in srgb, var(--color-text) 3%, transparent);
 
 				> mitra-icon, .details li > mitra-icon {

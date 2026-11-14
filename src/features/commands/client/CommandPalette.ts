@@ -121,7 +121,7 @@ export class CommandPalette extends Component {
 					backdrop-filter: blur(16px);
 					color: var(--color-text);
 					border: var(--border);
-					border-radius: 14px;
+					border-radius: calc(var(--border-radius) * 3.5);
 					box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
 					font-family: var(--font-family);
 

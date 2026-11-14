@@ -13,6 +13,7 @@ function fakeEm(users: Array<User>): EntityManager {
 		findOne: (_type: unknown, where: { identity?: { issuer?: string, subject?: unknown } }) =>
 			Promise.resolve(users.find(user =>
 				user.identity?.issuer === where.identity?.issuer && user.identity?.subject === where.identity?.subject) ?? null),
+		count: () => Promise.resolve(users.filter(user => user.administers && user.identity?.issuer).length),
 		persist: (user: User) => void users.push(user),
 	} as unknown as EntityManager
 }
@@ -47,6 +48,13 @@ describe('User', () => {
 			const second = await User.provision(fakeEm(users), ISSUER, { sub: 'subject-2' })
 			assert.notEqual(first, second)
 			assert.equal(users.length, 2)
+		})
+
+		it('makes the first to sign in the administrator, though the local account administers', async () => {
+			const users = [new User({ username: User.default.username, role: 'administrator' })]
+			const first = await User.provision(fakeEm(users), ISSUER, { sub: 'subject-1' })
+			const second = await User.provision(fakeEm(users), ISSUER, { sub: 'subject-2' })
+			assert.deepEqual([first.role, second.role], ['administrator', 'member'])
 		})
 	})
 

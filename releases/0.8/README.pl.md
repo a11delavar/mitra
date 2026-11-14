@@ -44,7 +44,19 @@ Zaplanowane zadanie pokazuje teraz termin wprost na swojej fladze, jako godzinę
 Dokumentacja: [Ustawianie terminu](../../docs/planning.md#set-a-due-date)
 
 ## Personalizacja
-Nadaj każdemu kalendarzowi jeden z dwóch nowych kolorów albo dowolny własny. Zmień nazwę nagłówka konta dwukrotnym kliknięciem i ukryj wszystkie jego kalendarze naraz. Do całej reszty zmień wygląd aplikacji Mitra za pomocą własnych stylów CSS: dla siebie w Ustawieniach albo dla wszystkich na twoim serwerze za pomocą pliku w jego folderze danych. Osoba, która zarządza serwerem, ma w Ustawieniach osobną sekcję.
+Nadaj każdemu kalendarzowi jeden z dwóch nowych kolorów albo dowolny własny. Zmień nazwę nagłówka konta dwukrotnym kliknięciem i ukryj wszystkie jego kalendarze naraz.
+
+## Własny CSS
+Wygląd aplikacji Mitra to zwykły CSS, a teraz możesz dodać na nim własny. Otwórz **Ustawienia → Ogólne → Własny CSS** i wpisz regułę: Mitra stosuje ją w trakcie pisania i zapisuje na twoim koncie, więc towarzyszy ci na każdym urządzeniu. Nadaj aplikacji swój ulubiony kolor, wyprostuj wszystkie zaokrąglone rogi albo ukryj to, czego nigdy nie używasz. Tam, gdzie loguje się wiele osób, administrator znajdzie też w **Administracja** ustawienie **Własny CSS dla wszystkich**, które nadaje wygląd całemu serwerowi.
+
+**Udostępnij na GitHubie** pod polem otwiera wpis w [dyskusjach Custom CSS](https://github.com/a11delavar/mitra/discussions/categories/custom-css) z twoim arkuszem stylów już w środku, a tam znajdziesz też to, co zrobili inni. Do wersji Mitra 1.0 aktualizacja może zmienić to, na co celują twoje reguły, więc po aktualizacji rzuć okiem, czy wszystko działa.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="custom-css-dark.webp">
+	<img src="custom-css-light.webp" alt="Mitra w złocie swojego logo, z otwartą w ustawieniach regułą Własnego CSS, która to robi">
+</picture>
+
+Dokumentacja: [Własny CSS](../../docs/custom-css.md)
 
 ## Duplikowanie na inne dni
 Niektóre rzeczy wypadają w dni, których żadne powtarzanie nie opisze. Skierowanie na osiem zabiegów fizjoterapii rozkłada się na wolne terminy gabinetu, a klient rezerwuje cię na 3., 9. i 17. Dodaj pierwszy, wybierz **Duplikuj na inne dni** w jego menu ⋯ i zaznacz pozostałe w dwóch pokazanych miesiącach. Przytrzymaj Shift, aby wybrać od razu kilka dni z rzędu. Każdy dzień dostaje kopię o tej samej godzinie, osobny wpis, który możesz przesunąć lub zmienić jak każdy inny.

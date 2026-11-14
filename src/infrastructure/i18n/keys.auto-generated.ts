@@ -224,8 +224,12 @@ declare global {
 		"Current time zone": unknown
 		"Current time zone. Switch to ${city} time to change the zone": unknown
 		"Custom color": unknown
+		"Custom CSS": unknown
+		"Custom CSS for everyone": unknown
+		"Custom CSS is off for this load.": unknown
 		"Custom range": unknown
 		"Custom…": unknown
+		"CustomCssSetting.Keywords": unknown
 		"Dark": unknown
 		"Date": unknown
 		"days": unknown
@@ -340,12 +344,15 @@ declare global {
 		"Home": unknown
 		"hours": unknown
 		"How to connect": unknown
+		"How to restyle Mitra": unknown
 		"Ics.UrlHint": unknown
+		"If a rule hides the way back, add ?css=off to the address.": unknown
 		"Importing entries…": unknown
 		"Improvements": unknown
 		"In progress": unknown
 		"Install as an App": unknown
 		"Install mitra as an app. It gets its own window, and notifications appear under its own name and icon": unknown
+		"InstanceCssSetting.Keywords": unknown
 		"Integration options": unknown
 		"Integration Token": unknown
 		"Interval": unknown
@@ -539,6 +546,8 @@ declare global {
 		"Reset columns": unknown
 		"Reset to calendar color": unknown
 		"Reset to default color": unknown
+		"Restyle Mitra for everyone on this server. Each person's own CSS comes after it, so theirs wins.": unknown
+		"Restyle Mitra with your own CSS, on every device you sign in on. An update can change what your rules target.": unknown
 		"Revoke this token": unknown
 		"Routine": unknown
 		"Routines": unknown
@@ -560,6 +569,7 @@ declare global {
 		"Server URL": unknown
 		"Set as the default for new entries": unknown
 		"Settings": unknown
+		"Share on GitHub": unknown
 		"Show all calendars": unknown
 		"Show as busy or free": unknown
 		"Show calendar": unknown

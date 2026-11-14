@@ -1,3 +1,4 @@
+import type { InstanceSettings } from '#features/settings/InstanceSettings.js'
 import { model } from '#infrastructure/model'
 
 /** What an instance says of itself (`GetMeta`), which the browser reads once it loads and again when it is stale. */
@@ -18,6 +19,8 @@ export class Instance {
 	signIn?: boolean
 	/** Whether agents may connect over MCP (`MITRA_MCP`). */
 	mcp?: boolean
+	/** What its administrators set for everyone on it. */
+	settings?: InstanceSettings
 
 	constructor(init?: Partial<Instance>) {
 		Object.assign(this, init)

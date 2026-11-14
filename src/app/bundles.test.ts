@@ -73,6 +73,11 @@ describe('the browser bundle', () => {
 		}
 	})
 
+	it('puts the document styles of Mitra in one cascade layer, which a custom stylesheet outranks', async () => {
+		const result = await esbuild.build({ ...frontendOptions, outfile: undefined, outdir: 'out_bundle_check', write: false, sourcemap: false })
+		assert.ok(result.outputFiles.some(file => file.text.includes('@layer mitra {')), 'Mitra.styles must wrap its rules in @layer mitra')
+	})
+
 	it('takes the headless controllers', async () => {
 		const inputs = await inputsOf(frontendOptions)
 		for (const required of [

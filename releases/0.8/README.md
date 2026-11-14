@@ -44,7 +44,19 @@ A scheduled task now shows when it's due right on its flag, as a time, a weekday
 Docs: [Planning](../../docs/planning.md#set-a-due-date)
 
 ## Personalization
-Give each calendar one of two more colors, or any color you like. Rename an account's heading by double-clicking it, and hide all of its calendars at once. For everything beyond that, restyle Mitra with CSS of your own: for yourself in Settings, or for everyone on your server through a file in its data folder. Whoever runs the server gets a section of their own in Settings.
+Give each calendar one of two more colors, or any color you like. Rename an account's heading by double-clicking it, and hide all of its calendars at once.
+
+## Custom CSS
+Mitra's look is plain CSS, and now you can add your own on top of it. Open **Settings → General → Custom CSS** and type a rule: Mitra wears it as you type and keeps it on your account, so it follows you to every device. Give Mitra your favorite color, square off every corner or hide what you never use. Where people sign in, an administrator also finds **Custom CSS for everyone** under **Administration**, to give the whole server its look.
+
+**Share on GitHub** under the box starts a post in the [Custom CSS discussions](https://github.com/a11delavar/mitra/discussions/categories/custom-css) with your stylesheet already in it, and that's where to find what others made too. Until Mitra 1.0, an update can change what your rules target, so take a look after updating.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="custom-css-dark.webp">
+	<img src="custom-css-light.webp" alt="Mitra in the gold of its logo, with the Custom CSS rule that does it open in the settings">
+</picture>
+
+Docs: [Custom CSS](../../docs/custom-css.md)
 
 ## Duplicate to other days
 Some things happen on days no repeat can describe. A prescription for eight physiotherapy sessions lands wherever the practice has a free slot, and a client books you for the 3rd, the 9th and the 17th. Add the first one, choose **Duplicate to other days** in its ⋯ menu, and tick the rest on the two months it shows. Hold Shift to take a run of days at once. Each day gets a copy at the same time, an entry of its own that you can move or change like any other.

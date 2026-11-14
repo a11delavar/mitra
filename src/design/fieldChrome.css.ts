@@ -9,7 +9,7 @@ export const fieldChrome = unsafeCSS(`
 	box-sizing: border-box;
 	min-block-size: var(--control-height);
 	border: 1px solid var(--mitra-field-border, color-mix(in srgb, var(--color-text) 8%, transparent));
-	border-radius: 6px;
+	border-radius: calc(var(--border-radius) * 1.5);
 	background: var(--mitra-field-background, color-mix(in srgb, var(--color-text) 5%, transparent));
 	outline: none;
 	transition: background 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), border-color 0.15s ease, box-shadow 0.15s ease;

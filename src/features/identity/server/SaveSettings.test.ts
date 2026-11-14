@@ -13,4 +13,9 @@ describe('SaveSettings', () => {
 		await SaveSettings.call({ settings: { snapMinutes: 15, hideDoneTasks: true, unknown: 'dropped' } as never })
 		assert.deepEqual({ ...(await GetUser.call()).settings }, { snapMinutes: 15, hideDoneTasks: true })
 	})
+
+	it('keeps the account stylesheet, and that it is turned off, without its imports', async () => {
+		await SaveSettings.call({ settings: { customCss: '@import "x.css";\nmitra-day[today] { outline: 2px solid; }', customCssEnabled: false } })
+		assert.deepEqual({ ...(await GetUser.call()).settings }, { customCss: '\nmitra-day[today] { outline: 2px solid; }', customCssEnabled: false })
+	})
 })

@@ -235,7 +235,7 @@ export class DialogAbout extends DialogComponent {
 						align-items: baseline;
 						gap: 0.5rem;
 						padding: 0.5rem 0.625rem;
-						border-radius: 6px;
+						border-radius: calc(var(--border-radius) * 1.5);
 						font-size: 0.875rem;
 						cursor: pointer;
 

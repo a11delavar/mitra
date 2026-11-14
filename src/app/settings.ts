@@ -2,6 +2,7 @@
 // ThemeSetting executes at module evaluation to apply data-theme before first paint.
 import './ThemeSetting.js'
 import '#infrastructure/i18n/LocaleSetting.js'
+import '#features/customization/client/CustomCssSetting.js'
 import '#features/calendar/client/DefaultViewSetting.js'
 import '#features/entries/client/HideDoneTasksSetting.js'
 import '#features/entries/client/HideCancelledSetting.js'
@@ -15,4 +16,5 @@ import '#features/reminders/client/DevicesSetting.js'
 import '#features/reminders/client/DefaultReminderSetting.js'
 import '#features/agents/client/McpSetting.js'
 import '#features/agents/client/AccessTokensSetting.js'
+import '#features/customization/client/InstanceCssSetting.js'
 export * from '#features/settings/client/Setting.js'

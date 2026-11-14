@@ -44,7 +44,19 @@ Une tâche planifiée affiche désormais son échéance directement sur son drap
 Documentation : [Fixer une échéance](../../docs/planning.md#set-a-due-date)
 
 ## Personnalisation
-Donnez à chaque calendrier l'une de deux nouvelles couleurs, ou la couleur de votre choix. Renommez l'en-tête d'un compte d'un double-clic et masquez tous ses calendriers d'un coup. Pour tout le reste, modifiez l'apparence de Mitra avec votre propre CSS : pour vous dans les Paramètres, ou pour tout le monde sur votre serveur grâce à un fichier dans son dossier de données. Qui administre le serveur dispose d'une section à lui dans les Paramètres.
+Donnez à chaque calendrier l'une de deux nouvelles couleurs, ou la couleur de votre choix. Renommez l'en-tête d'un compte d'un double-clic et masquez tous ses calendriers d'un coup.
+
+## CSS personnalisé
+L'apparence de Mitra est du CSS ordinaire, et vous pouvez maintenant ajouter le vôtre par-dessus. Ouvrez **Paramètres → Général → CSS personnalisé** et saisissez une règle : Mitra l'applique pendant que vous tapez et la garde dans votre compte, si bien qu'elle vous suit sur tous vos appareils. Donnez à Mitra votre couleur préférée, rendez tous les angles carrés ou masquez ce que vous n'utilisez jamais. Là où l'on se connecte, un administrateur trouve aussi **CSS personnalisé pour tous** sous **Administration**, pour donner son apparence à tout le serveur.
+
+**Partager sur GitHub**, sous la zone, ouvre une publication dans les [discussions Custom CSS](https://github.com/a11delavar/mitra/discussions/categories/custom-css) avec votre feuille de style déjà dedans, et c'est aussi là que vous trouverez ce que d'autres ont fait. Jusqu'à Mitra 1.0, une mise à jour peut changer ce que visent vos règles : jetez-y un œil après chaque mise à jour.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="custom-css-dark.webp">
+	<img src="custom-css-light.webp" alt="Mitra dans l'or de son logo, avec la règle de CSS personnalisé qui le fait ouverte dans les paramètres">
+</picture>
+
+Documentation : [CSS personnalisé](../../docs/custom-css.md)
 
 ## Dupliquer sur d'autres jours
 Certaines choses tombent des jours qu'aucune répétition ne sait décrire. Une ordonnance de huit séances de kinésithérapie se cale sur les créneaux libres du cabinet, et un client vous réserve le 3, le 9 et le 17. Ajoutez la première, choisissez **Dupliquer sur d'autres jours** dans son menu ⋯ et cochez les autres sur les deux mois affichés. Maintenez Maj pour choisir plusieurs jours d'affilée d'un coup. Chaque jour reçoit une copie à la même heure, une entrée à part entière que vous pouvez déplacer ou modifier comme n'importe quelle autre.

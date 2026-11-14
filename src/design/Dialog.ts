@@ -83,7 +83,7 @@ export class Dialog extends Component {
 
 	static override get styles() {
 		return css`
-			${Mitra.styles}
+			${Mitra.rules}
 
 			:host {
 				display: contents;
@@ -108,7 +108,7 @@ export class Dialog extends Component {
 				backdrop-filter: blur(12px);
 				color: var(--color-text);
 				border: var(--border);
-				border-radius: 14px;
+				border-radius: calc(var(--border-radius) * 3.5);
 				--mitra-dialog-padding: 1.25rem;
 				padding: var(--mitra-dialog-padding);
 				box-sizing: border-box;

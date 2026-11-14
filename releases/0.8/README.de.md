@@ -44,7 +44,19 @@ Eine geplante Aufgabe zeigt jetzt direkt auf ihrer Fahne, wann sie fällig ist, 
 Doku: [Ein Fälligkeitsdatum setzen](../../docs/planning.md#set-a-due-date)
 
 ## Personalisierung
-Gib jedem Kalender eine von zwei weiteren Farben oder eine ganz eigene. Benenne die Überschrift eines Kontos per Doppelklick um und blende alle seine Kalender auf einmal aus. Für alles Weitere gestalte Mitra mit eigenem CSS: für dich selbst in den Einstellungen oder für alle auf deinem Server über eine Datei in seinem Datenordner. Wer den Server betreibt, bekommt in den Einstellungen einen eigenen Bereich.
+Gib jedem Kalender eine von zwei weiteren Farben oder eine ganz eigene. Benenne die Überschrift eines Kontos per Doppelklick um und blende alle seine Kalender auf einmal aus.
+
+## Eigenes CSS
+Mitras Aussehen ist schlichtes CSS, und jetzt kannst du dein eigenes darüberlegen. Öffne **Einstellungen → Allgemein → Eigenes CSS** und tippe eine Regel: Mitra wendet sie beim Tippen an und speichert sie in deinem Konto, sodass sie dir auf jedes Gerät folgt. Gib Mitra deine Lieblingsfarbe, mach alle Ecken eckig oder blende aus, was du nie brauchst. Wo man sich anmeldet, findet, wer den Server verwaltet, unter **Verwaltung** außerdem **Eigenes CSS für alle**, um dem ganzen Server sein Aussehen zu geben.
+
+**Auf GitHub teilen** unter dem Feld beginnt einen Beitrag in den [Custom-CSS-Diskussionen](https://github.com/a11delavar/mitra/discussions/categories/custom-css), in dem dein Stylesheet schon steht, und dort findest du auch, was andere gemacht haben. Bis Mitra 1.0 kann ein Update ändern, worauf deine Regeln zielen, also schau nach einem Update kurz nach.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="custom-css-dark.webp">
+	<img src="custom-css-light.webp" alt="Mitra im Gold seines Logos, mit der Regel unter Eigenes CSS, die das macht, offen in den Einstellungen">
+</picture>
+
+Doku: [Eigenes CSS](../../docs/custom-css.md)
 
 ## Auf andere Tage duplizieren
 Manches findet an Tagen statt, die keine Wiederholung beschreiben kann. Ein Rezept über acht Physiotherapie-Termine verteilt sich auf die freien Zeiten der Praxis, und ein Kunde bucht dich für den 3., 9. und 17. Lege den ersten Termin an, wähle in seinem ⋯-Menü **Auf andere Tage duplizieren** und wähle die übrigen in den zwei angezeigten Monaten aus. Halte die Umschalttaste gedrückt, um mehrere Tage am Stück zu wählen. Jeder Tag bekommt eine Kopie zur selben Uhrzeit, einen eigenen Eintrag, den du wie jeden anderen verschieben oder ändern kannst.

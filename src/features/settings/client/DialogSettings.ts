@@ -145,7 +145,7 @@ export class DialogSettings extends DialogComponent<SettingsParameters> {
 						align-items: center;
 						gap: 0.625rem;
 						padding: 0.5rem 0.625rem;
-						border-radius: 6px;
+						border-radius: calc(var(--border-radius) * 1.5);
 						font-size: 0.875rem;
 						color: color-mix(in srgb, var(--color-text) 80%, transparent);
 						cursor: pointer;

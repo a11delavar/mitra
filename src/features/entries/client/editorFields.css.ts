@@ -25,7 +25,7 @@ export const editorFieldStyles = css`
 			line-height: 1.4;
 			background: transparent;
 			border: 1px solid transparent;
-			border-radius: 6px;
+			border-radius: calc(var(--border-radius) * 1.5);
 			padding-inline: calc(var(--field-padding-inline) - 1px);
 			transition: border-color 0.15s ease, background-color 0.15s ease;
 

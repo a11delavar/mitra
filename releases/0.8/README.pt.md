@@ -44,7 +44,19 @@ Uma tarefa agendada agora mostra na própria bandeira quando vence, como uma hor
 Documentação: [Definir uma data de vencimento](../../docs/planning.md#set-a-due-date)
 
 ## Personalização
-Dê a cada calendário uma de duas novas cores, ou a cor que quiser. Renomeie o cabeçalho de uma conta com um clique duplo e oculte todos os calendários dela de uma vez. Para todo o resto, mude o visual do Mitra com o seu próprio CSS: para você nas Configurações, ou para todos no seu servidor por meio de um arquivo na pasta de dados dele. Quem administra o servidor ganha uma seção própria nas Configurações.
+Dê a cada calendário uma de duas novas cores, ou a cor que quiser. Renomeie o cabeçalho de uma conta com um clique duplo e oculte todos os calendários dela de uma vez.
+
+## CSS personalizado
+A aparência do Mitra é CSS comum, e agora você pode acrescentar o seu por cima. Abra **Configurações → Geral → CSS personalizado** e digite uma regra: o Mitra a aplica enquanto você digita e a guarda na sua conta, então ela acompanha você em todos os dispositivos. Dê ao Mitra a sua cor favorita, deixe todos os cantos retos ou esconda o que você nunca usa. Onde as pessoas entram com uma conta, quem administra o servidor também encontra **CSS personalizado para todos** em **Administração**, para dar ao servidor inteiro a aparência dele.
+
+**Compartilhar no GitHub**, abaixo da caixa, começa uma publicação nas [discussões de Custom CSS](https://github.com/a11delavar/mitra/discussions/categories/custom-css) com a sua folha de estilo já dentro, e é lá também que você encontra o que outras pessoas fizeram. Até o Mitra 1.0, uma atualização pode mudar aquilo que as suas regras atingem, então dê uma olhada depois de atualizar.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="custom-css-dark.webp">
+	<img src="custom-css-light.webp" alt="O Mitra no dourado do seu logotipo, com a regra de CSS personalizado que faz isso aberta nas configurações">
+</picture>
+
+Documentação: [CSS personalizado](../../docs/custom-css.md)
 
 ## Duplicar em outros dias
 Algumas coisas acontecem em dias que nenhuma repetição consegue descrever. Uma receita de oito sessões de fisioterapia se encaixa nos horários livres da clínica, e um cliente reserva você para os dias 3, 9 e 17. Adicione a primeira, escolha **Duplicar em outros dias** no menu ⋯ dela e marque as demais nos dois meses exibidos. Segure Shift para escolher vários dias seguidos de uma vez. Cada dia recebe uma cópia no mesmo horário, uma entrada própria que você pode mover ou alterar como qualquer outra.

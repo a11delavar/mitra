@@ -44,7 +44,19 @@ Una tarea programada ahora muestra en su propia bandera cuándo vence, como una 
 Docs: [Fijar una fecha de vencimiento](../../docs/planning.md#set-a-due-date)
 
 ## Personalización
-Da a cada calendario uno de dos colores más, o el color que quieras. Cambia el nombre del encabezado de una cuenta con un doble clic y oculta todos sus calendarios a la vez. Para todo lo demás, cambia el estilo de Mitra con tu propio CSS: para ti en Ajustes, o para todos en tu servidor con un archivo en su carpeta de datos. Quien administra el servidor tiene una sección propia en Ajustes.
+Da a cada calendario uno de dos colores más, o el color que quieras. Cambia el nombre del encabezado de una cuenta con un doble clic y oculta todos sus calendarios a la vez.
+
+## CSS personalizado
+El aspecto de Mitra es CSS normal, y ahora puedes añadir el tuyo encima. Abre **Ajustes → General → CSS personalizado** y escribe una regla: Mitra la aplica mientras escribes y la guarda en tu cuenta, así que te sigue a todos tus dispositivos. Dale a Mitra tu color favorito, cuadra todas las esquinas u oculta lo que nunca usas. Donde se inicia sesión, quien administra el servidor encuentra además **CSS personalizado para todos** en **Administración**, para darle su aspecto a todo el servidor.
+
+**Compartir en GitHub**, bajo el cuadro, abre una publicación en las [discusiones de Custom CSS](https://github.com/a11delavar/mitra/discussions/categories/custom-css) con tu hoja de estilos ya dentro, y allí también encontrarás lo que han hecho otros. Hasta Mitra 1.0, una actualización puede cambiar aquello a lo que apuntan tus reglas, así que échale un vistazo después de actualizar.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="custom-css-dark.webp">
+	<img src="custom-css-light.webp" alt="Mitra en el dorado de su logotipo, con la regla de CSS personalizado que lo hace abierta en los ajustes">
+</picture>
+
+Docs: [CSS personalizado](../../docs/custom-css.md)
 
 ## Duplicar en otros días
 Algunas cosas ocurren en días que ninguna repetición puede describir. Una receta de ocho sesiones de fisioterapia se reparte entre los huecos libres de la consulta, y un cliente te reserva el 3, el 9 y el 17. Añade la primera, elige **Duplicar en otros días** en su menú ⋯ y marca las demás en los dos meses que aparecen. Mantén pulsado Mayús para elegir varios días seguidos de una vez. Cada día recibe una copia a la misma hora, una entrada propia que puedes mover o cambiar como cualquier otra.

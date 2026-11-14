@@ -219,7 +219,7 @@ export class Markdown extends Component {
 					margin: 0.8em 0;
 					padding: 0.8em 1em;
 					background: color-mix(in srgb, var(--color-text) 6%, transparent);
-					border-radius: 8px;
+					border-radius: calc(var(--border-radius) * 2);
 					overflow-x: auto;
 
 					code {
@@ -237,7 +237,7 @@ export class Markdown extends Component {
 
 				img {
 					max-width: 100%;
-					border-radius: 8px;
+					border-radius: calc(var(--border-radius) * 2);
 				}
 
 				table {
@@ -269,7 +269,7 @@ export class Markdown extends Component {
 					margin: 0.8em 0;
 					padding: 0.5em 0.85em;
 					border-inline-start: 3px solid var(--callout-color);
-					border-radius: 6px;
+					border-radius: calc(var(--border-radius) * 1.5);
 					background: color-mix(in srgb, var(--callout-color) 9%, transparent);
 					/* The text around it tinted toward the callout, as muted text is to the title: readable on either theme. */
 					color: color-mix(in srgb, var(--callout-color) 40%, currentColor);

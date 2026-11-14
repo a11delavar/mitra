@@ -8,7 +8,7 @@ export const surface = unsafeCSS(`
 	background: ${surfaceColor};
 	backdrop-filter: blur(10px);
 	border: var(--border);
-	border-radius: 8px;
+	border-radius: calc(var(--border-radius) * 2);
 	box-shadow: 0 24px 48px -8px rgb(0 0 0 / 0.48), 0 4px 12px -1px rgb(0 0 0 / 0.24);
 	color: var(--color-text);
 `)

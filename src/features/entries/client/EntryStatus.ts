@@ -248,7 +248,7 @@ export class EntryStatusComponent extends Component {
 									gap: 0.375rem;
 									padding: 0.1875rem 0.25rem;
 									margin-inline: -0.25rem;
-									border-radius: 4px;
+									border-radius: var(--border-radius);
 									cursor: pointer;
 									font-size: 0.75rem;
 									color: var(--color-text-muted);

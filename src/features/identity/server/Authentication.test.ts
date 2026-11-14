@@ -68,6 +68,12 @@ describe('Authentication', () => {
 			const local = await orm.em.fork().findOneOrFail(User, { username: User.default.username })
 			assert.equal(await userOf(await request('/api/entries')), local.id)
 		})
+
+		it('makes the local account the administrator, the instance being its alone', async () => {
+			await Authentication.of(orm.em.fork(), new Environment({}))
+			const local = await orm.em.fork().findOneOrFail(User, { username: User.default.username })
+			assert.ok(local.administers)
+		})
 	})
 
 	describe('through a provider', () => {

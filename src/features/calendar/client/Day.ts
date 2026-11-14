@@ -26,11 +26,8 @@ export class Day extends Component {
 				position: relative;
 				transition: background 0.15s ease;
 
-				&[data-with-background] {
-					background: var(--color-surface);
-				}
-
-				&:not([data-with-background]) {
+				/* A day outside the month its view shows. */
+				&[data-outside] {
 					& > .header .day, & > .header .month {
 						color: var(--color-text-muted);
 					}

@@ -231,7 +231,7 @@ export class Sidebar extends Component {
 					padding: 0.5rem 0.5rem 0.5rem 0.4375rem;
 					background: var(--color-surface);
 					border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-					border-radius: 0.5rem;
+					border-radius: calc(var(--border-radius) * 2);
 
 					mitra-avatar {
 						--mitra-avatar-size: 2rem;
@@ -294,7 +294,7 @@ export class Sidebar extends Component {
 					margin-top: -1.5rem;
 					padding-inline: 0.5rem;
 					cursor: pointer;
-					border-radius: 0.375rem;
+					border-radius: calc(var(--border-radius) * 1.5);
 
 					/* The global button skin's hover/active box is far too loud for a brand mark. The only
 					   affordance is the version whisper waking up. */
@@ -549,7 +549,7 @@ export class Sidebar extends Component {
 
 				.sources > .source {
 					min-height: 1.75rem;
-					border-radius: 0.375rem;
+					border-radius: calc(var(--border-radius) * 1.5);
 					/* The whole row is its own drag handle: a mouse drag must never start a text
 					   selection, and the grab cursor is the affordance; the row's own controls keep their
 					   pointer cursors, and the rename field restores text behaviour below. */
@@ -588,7 +588,7 @@ export class Sidebar extends Component {
 						all: unset;
 						grid-column: 2;
 						display: inline-flex;
-						border-radius: 0.375rem;
+						border-radius: calc(var(--border-radius) * 1.5);
 						cursor: pointer;
 						${focusRing};
 					}
@@ -637,7 +637,7 @@ export class Sidebar extends Component {
 				.sources > .source[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}], .integration[data-reorderability=${unsafeCSS(ReorderabilityState.Dragging)}] {
 					z-index: 5;
 					background-color: var(--color-background);
-					border-radius: 0.375rem;
+					border-radius: calc(var(--border-radius) * 1.5);
 					box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.25);
 					cursor: grabbing;
 				}

@@ -44,7 +44,19 @@ Een ingeplande taak laat nu op zijn vlaggetje zien wanneer hij klaar moet zijn, 
 Documentatie: [Een vervaldatum instellen](../../docs/planning.md#set-a-due-date)
 
 ## Personalisatie
-Geef elke agenda een van twee nieuwe kleuren, of een kleur naar keuze. Hernoem de kop van een account met een dubbelklik en verberg al zijn agenda's in één keer. Voor al het andere geef je Mitra een eigen uiterlijk met je eigen CSS: voor jezelf in Instellingen, of voor iedereen op je server via een bestand in de gegevensmap. Wie de server beheert, krijgt daarvoor een eigen sectie in Instellingen.
+Geef elke agenda een van twee nieuwe kleuren, of een kleur naar keuze. Hernoem de kop van een account met een dubbelklik en verberg al zijn agenda's in één keer.
+
+## Eigen CSS
+Het uiterlijk van Mitra is gewone CSS, en nu kun je je eigen CSS eroverheen leggen. Open **Instellingen → Algemeen → Eigen CSS** en typ een regel: Mitra past die toe terwijl je typt en bewaart hem in je account, zodat hij je naar elk apparaat volgt. Geef Mitra je favoriete kleur, maak alle hoeken vierkant of verberg wat je nooit gebruikt. Waar mensen inloggen, vindt wie de server beheert onder **Beheer** ook **Eigen CSS voor iedereen**, om de hele server een eigen uiterlijk te geven.
+
+**Delen op GitHub** onder het vak begint een bericht in de [Custom CSS-discussies](https://github.com/a11delavar/mitra/discussions/categories/custom-css) met je stylesheet er al in, en daar vind je ook wat anderen hebben gemaakt. Tot Mitra 1.0 kan een update veranderen waar je regels op mikken, dus kijk na een update even of alles nog klopt.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="custom-css-dark.webp">
+	<img src="custom-css-light.webp" alt="Mitra in het goud van zijn logo, met de regel onder Eigen CSS die dat doet open in de instellingen">
+</picture>
+
+Documentatie: [Eigen CSS](../../docs/custom-css.md)
 
 ## Dupliceren naar andere dagen
 Sommige dingen vallen op dagen die geen herhaling kan beschrijven. Een verwijzing voor acht fysiotherapiesessies wordt verdeeld over de vrije plekken van de praktijk, en een klant boekt je voor de 3e, de 9e en de 17e. Voeg de eerste toe, kies **Naar andere dagen dupliceren** in het ⋯-menu en vink de rest aan in de twee maanden die verschijnen. Houd Shift ingedrukt om een reeks dagen in één keer te kiezen. Elke dag krijgt een kopie op hetzelfde tijdstip, een eigen item dat je net als elk ander kunt verplaatsen of wijzigen.

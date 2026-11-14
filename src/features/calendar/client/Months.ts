@@ -170,6 +170,7 @@ export class Months extends Component {
 
 				> mitra-day {
 					container-type: size;
+					background: var(--color-surface);
 
 					.header {
 						position: static;
@@ -282,7 +283,6 @@ export class Months extends Component {
 			${month.days.map((day, index) => html`
 				<mitra-day
 					data-date=${day.dayStart.toISOString()}
-					data-with-background
 					style="grid-row: ${row}; grid-column: ${month.firstColumn + index + 2};"
 					.date=${day}
 					?today=${day.dayStart.valueOf() === todayValue}

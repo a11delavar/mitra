@@ -16,6 +16,9 @@ import { ValidationError } from '#infrastructure/validation'
 import { AccessToken } from './AccessToken.js'
 import { Identity, type IdentityClaims } from './Identity.js'
 
+/** What a person may do on the instance: an administrator also looks after it, saying what holds for everyone on it. */
+export type UserRole = 'administrator' | 'member'
+
 interface EntryFilter {
 	readonly range?: DateTimeRange
 	readonly search?: string
@@ -32,6 +35,8 @@ export class User {
 
 	@primaryKey() id: string = crypto.randomUUID()
 	@property({ type: 'string', unique: true }) username!: string
+
+	@property({ type: 'string', default: 'member' }) role: UserRole = 'member'
 
 	@embedded(() => Identity, { prefix: 'oidc_', nullable: true }) identity?: Identity
 
@@ -58,8 +63,16 @@ export class User {
 			return existing
 		}
 		const user = new User({ username: claims.sub, identity: Identity.fromClaims(issuer, claims) })
+		// The first to sign in looks after the instance while nobody who signs in does (the local account can't once anyone does).
+		if (!await em.count(User, { role: 'administrator', identity: { issuer: { $ne: null } } })) {
+			user.role = 'administrator'
+		}
 		em.persist(user)
 		return user
+	}
+
+	get administers() {
+		return this.role === 'administrator'
 	}
 
 	hasSeen(version: string) {
@@ -134,15 +147,11 @@ export class User {
 		return found
 	}
 
-	/** The one local account single-user mode signs every request in as, made on first use. */
+	/** The one local account single-user mode signs every request in as, made on first use, and administering the instance it has to itself. */
 	static async local(em: EntityManager) {
-		const existing = await em.findOne(User, { username: User.default.username })
-		if (existing) {
-			return existing
-		}
-		const user = User.default
-		em.persist(user)
-		await em.flush()
+		const user = await em.findOne(User, { username: User.default.username }) ?? User.default
+		user.role = 'administrator'
+		await em.persist(user).flush()
 		return user
 	}
 

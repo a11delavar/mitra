@@ -20,7 +20,7 @@ The command palette knows the same words, and changes most settings without open
 
 ## Your account or this device
 
-Most settings belong to your account and follow you to every device and browser you sign in from: the language, the default view, **Hide done tasks**, **Hide cancelled**, **Hide availability**, the default calendar, the default duration, **Snap to** and both default reminders.
+Most settings belong to your account and follow you to every device and browser you sign in from: the language, the default view, **Hide done tasks**, **Hide cancelled**, **Hide availability**, the default calendar, the default duration, **Snap to**, both default reminders and your **Custom CSS**.
 
 The others belong to the device you're on, so your phone and your laptop can differ: the theme, the connector lines, and whether this browser shows notifications.
 
@@ -33,6 +33,8 @@ Mitra also remembers some things on each device as you use them: how far you've 
 **Language** offers English, German, French, Spanish, Portuguese, Italian, Persian, Chinese, Polish, Dutch, Arabic and Russian, each named in its own language; Chinese is written in simplified characters. The change applies at once, without reloading, and Persian and Arabic lay Mitra out from right to left.
 
 Each language also decides how dates and times read, which day the week starts on, and which days are the weekend. At first it reads as your browser writes the language, so English usually reads as in the United States, German as in Germany and Persian as in Iran. The arrow at the end of a language unfolds the countries and areas it is written in, such as the United Kingdom or Europe for English: English for the United Kingdom writes 9 Oct 2026 and 13:00 and starts weeks on Monday, while for the United States it writes Oct 9, 2026 and 1:00 PM and starts them on Sunday. A switch to another language from the command palette keeps your country when the new language is written there. A preview under the setting shows how dates, times, the week, numbers and time zone names read. A country here is not a time zone: New York and Los Angeles share one.
+
+**Custom CSS** restyles Mitra with CSS of your own, worn as you type and kept on your account. The switch beside it turns it off without losing it. See [Custom CSS](custom-css.md) for what you can do with it. Where people sign in, an administrator also finds **Custom CSS for everyone** under **Administration**, which restyles Mitra for everyone on the server.
 
 ## Calendar
 

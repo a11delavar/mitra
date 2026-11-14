@@ -22,6 +22,11 @@ const language = process.argv.includes('--language') ? argument('--language')! :
 const ui = (english: string) => appText(english, language)
 const sample = (english: string) => sampleText(english, language)
 
+/** The stylesheet the Custom CSS page shows: Mitra's accent in the logo's gold. */
+const customCssExample = `:root {
+	--color-accent: #F0AC45;
+}`
+
 await stage(async (browser, origin) => {
 	const shot = (file: string, transparent: boolean, clip?: Clip) => capture(browser, file, transparent, clip, language)
 	const reopen = (theme: Theme, options: { availability?: boolean } = {}) => open(browser, origin, theme, { ...options, language })
@@ -190,6 +195,27 @@ await stage(async (browser, origin) => {
 		await shot(`time-zones-detail-${theme}`, false, await detail(browser, details.sidebar))
 		// Gone before the next theme's pass, where picking a zone already added would take it away instead.
 		await browser.evaluate(`await fetch('/api/user/time-zones/${encodeURIComponent('America/New_York')}', { method: 'DELETE' })`)
+
+		// The whole app wearing the gold accent, its settings open on the rule that does it. Cleared again for the next scenes.
+		await reopen(theme)
+		await press(browser, ...keys.comma())
+		// The dialog reopens on the page it showed last, the AI page after the scene before.
+		await click(browser, `[...document.querySelectorAll("mitra-dialog-settings nav button.page")].find(button => button.textContent.trim() === ${JSON.stringify(ui('General'))})`)
+		const customCssRow = 'document.querySelector("mitra-custom-css-editor").closest("mitra-setting-row")'
+		await browser.evaluate(`${customCssRow}.scrollIntoView({ block: 'center' })`)
+		await click(browser, 'document.querySelector("mitra-custom-css-editor textarea")')
+		await browser.send('Input.insertText', { text: customCssExample })
+		await waitFor(() => browser.evaluate<boolean>(`return getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim().toLowerCase() === '#f0ac45'`), 'the gold accent, worn')
+		await browser.evaluate('document.querySelector("mitra-custom-css-editor textarea").blur()')
+		await settle(browser)
+		await shot(`custom-css-${theme}`, false)
+		await press(browser, ...keys.escape())
+		await waitFor(() => browser.evaluate<boolean>(`return !!(await (await fetch('/api/user')).json()).settings?.customCss`), 'the custom CSS saved')
+		await browser.evaluate(`
+			const { settings = {} } = await (await fetch('/api/user')).json()
+			delete settings.customCss
+			await fetch('/api/user/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ settings }) })
+		`)
 
 		// Last, and the only one with availability shown. A tap on the label reaches the window beneath, as a reader's would.
 		await reopen(theme, { availability: true })

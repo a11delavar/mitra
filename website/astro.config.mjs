@@ -165,6 +165,7 @@ const sections = [
 			{ slug: 'location' },
 			// The app around the features, last.
 			{ slug: 'settings' },
+			{ slug: 'custom-css' },
 			{ slug: 'install-app' },
 			{ slug: 'calendar-files' },
 			{ slug: 'ai-connectors' },

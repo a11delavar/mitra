@@ -1,10 +1,11 @@
 import { html, live, type HTMLTemplateResult } from '@a11d/lit'
-import { SaveSettings } from '#operations'
+import { SaveInstanceSettings, SaveSettings } from '#operations'
 import { termsMatch } from '#features/commands/termsMatch.js'
 import { session } from '#infrastructure/http/PageSession.js'
 import { LocalizedRegistry } from '#infrastructure/i18n/LocalizedRegistry.js'
 import { PageState } from '#infrastructure/http/PageState.js'
 import { type UserSettings } from '../UserSettings.js'
+import { type InstanceSettings } from '../InstanceSettings.js'
 
 /** The dialog's pages, in the order its side panel lists them. */
 export const settingsPages = ['general', 'calendar', 'entries', 'notifications', 'ai', 'administration'] as const
@@ -41,6 +42,22 @@ export function userStorage<K extends keyof UserSettings>(key: K): SettingStorag
 				settings[key] = value
 			}
 			await session.keepUser(SaveSettings.call({ settings }))
+		},
+	}
+}
+
+/** Server storage for everyone on the instance, in `State`, which only an administrator writes. */
+export function instanceStorage<K extends keyof InstanceSettings>(key: K): SettingStorage<Exclude<InstanceSettings[K], undefined>> {
+	return {
+		read: () => session.instanceSettings[key] as Exclude<InstanceSettings[K], undefined> | undefined,
+		async write(value) {
+			const settings = { ...session.instanceSettings }
+			if (value === undefined) {
+				delete settings[key]
+			} else {
+				settings[key] = value
+			}
+			await session.keepInstanceSettings(SaveInstanceSettings.call({ settings }))
 		},
 	}
 }

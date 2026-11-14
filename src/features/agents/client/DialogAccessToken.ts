@@ -63,7 +63,7 @@ export class DialogAccessToken extends DialogComponent<{ readonly name: string, 
 						padding-block: 0.625rem;
 						padding-inline: 0.75rem 0.375rem;
 						border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-						border-radius: 6px;
+						border-radius: calc(var(--border-radius) * 1.5);
 						background: color-mix(in srgb, var(--color-text) 5%, transparent);
 
 						> code {

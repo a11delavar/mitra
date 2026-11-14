@@ -160,7 +160,7 @@ export const releaseNotes = css`
 			max-inline-size: 100%;
 			justify-self: center;
 			border: 1px solid color-mix(in srgb, var(--color-text) 14%, transparent);
-			border-radius: 0.625rem;
+			border-radius: calc(var(--border-radius) * 2.5);
 			overflow: hidden;
 			background: var(--color-background);
 

@@ -44,7 +44,19 @@ Un'attività pianificata ora mostra la sua scadenza direttamente sulla bandierin
 Documentazione: [Impostare una data di scadenza](../../docs/planning.md#set-a-due-date)
 
 ## Personalizzazione
-Dai a ogni calendario uno di due nuovi colori, o il colore che preferisci. Rinomina l'intestazione di un account con un doppio clic e nascondi tutti i suoi calendari in una volta. Per tutto il resto, cambia lo stile di Mitra con un CSS tutto tuo: per te nelle Impostazioni, o per tutti sul tuo server tramite un file nella sua cartella dei dati. Chi gestisce il server ha una sezione tutta sua nelle Impostazioni.
+Dai a ogni calendario uno di due nuovi colori, o il colore che preferisci. Rinomina l'intestazione di un account con un doppio clic e nascondi tutti i suoi calendari in una volta.
+
+## CSS personalizzato
+L'aspetto di Mitra è normale CSS, e ora puoi aggiungere il tuo sopra. Apri **Impostazioni → Generale → CSS personalizzato** e scrivi una regola: Mitra la applica mentre scrivi e la conserva nel tuo account, così ti segue su ogni dispositivo. Dai a Mitra il tuo colore preferito, rendi squadrati tutti gli angoli o nascondi quello che non usi mai. Dove si accede con un account, chi amministra il server trova anche **CSS personalizzato per tutti** in **Amministrazione**, per dare il suo aspetto a tutto il server.
+
+**Condividi su GitHub**, sotto il riquadro, apre un post nelle [discussioni Custom CSS](https://github.com/a11delavar/mitra/discussions/categories/custom-css) con il tuo foglio di stile già dentro, ed è lì che trovi anche quello che hanno fatto gli altri. Fino a Mitra 1.0, un aggiornamento può cambiare ciò a cui puntano le tue regole, quindi dai un'occhiata dopo ogni aggiornamento.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="custom-css-dark.webp">
+	<img src="custom-css-light.webp" alt="Mitra nell'oro del suo logo, con la regola di CSS personalizzato che lo fa aperta nelle impostazioni">
+</picture>
+
+Documentazione: [CSS personalizzato](../../docs/custom-css.md)
 
 ## Duplica in altri giorni
 Alcune cose cadono in giorni che nessuna ripetizione sa descrivere. Una prescrizione di otto sedute di fisioterapia si incastra negli orari liberi dello studio, e un cliente ti prenota per il 3, il 9 e il 17. Aggiungi la prima, scegli **Duplica in altri giorni** nel suo menu ⋯ e segna le altre sui due mesi mostrati. Tieni premuto Maiusc per scegliere più giorni di fila in una volta. Ogni giorno riceve una copia alla stessa ora, una voce a sé che puoi spostare o modificare come qualsiasi altra.

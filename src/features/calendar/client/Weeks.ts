@@ -231,6 +231,11 @@ export class Weeks extends Component {
 					mitra-day {
 						grid-row: 1 / -1;
 						container-type: size;
+						background: var(--color-surface);
+
+						&[data-outside] {
+							background: none;
+						}
 					}
 
 					/* A task's way to its due fills its days, beneath the entries; the flag waits at the due day's foot. */
@@ -412,7 +417,7 @@ export class Weeks extends Component {
 						style="grid-column: ${col + 1};"
 						.date=${day}
 						?today=${day.dayStart.equals(today)}
-						?data-with-background=${day.month === this.bufferNavigatingDate.month}>
+						?data-outside=${day.month !== this.bufferNavigatingDate.month}>
 					</mitra-day>
 				`)}
 				<mitra-due-mark .view=${this} .draw=${(occurrence: EntryOccurrence) => this.dueTemplate(occurrence, week)}></mitra-due-mark>
