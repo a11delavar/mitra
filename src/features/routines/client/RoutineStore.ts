@@ -12,8 +12,8 @@ import { RoutineEntries } from '../RoutineEntries.js'
 import { type RoutineEntryOccurrences } from '../RoutineEntryOccurrences.js'
 import { RoutineEntryOccurrenceStatus } from '../RoutineEntryOccurrenceStatus.js'
 
-/** Where the tab lists a routine: with a date today, or later. */
-export type RoutineSection = 'today' | 'later'
+/** Where the tab lists a routine: with a date today, ongoing, or past, when it came last long ago and comes no more. */
+export type RoutineSection = 'today' | 'ongoing' | 'past'
 
 /**
  * The routines as the server last listed them, by id: fetched beside the entries, and while the tab reads them
@@ -35,17 +35,20 @@ export class RoutineStore extends Controller {
 	/** What the person said is no routine, while the tab reads them, to make a routine again. */
 	private static dissolved: ReadonlyArray<Routine> = []
 
+	/** Whether the entries changed since the routines' were fetched, while the tab was not read. */
+	private static outdated = false
+
 	private static _showing = false
-	/** Whether the tab is read: the routines' entries are then fetched beside them. */
+	/**
+	 * Whether the tab is read: the routines' entries are then fetched beside them. What was fetched stays when the tab is
+	 * left, so coming back fetches again only once the entries changed meanwhile.
+	 */
 	static get showing() { return RoutineStore._showing }
 	static set showing(value) {
 		if (value !== RoutineStore._showing) {
 			RoutineStore._showing = value
-			if (value) {
+			if (value && (!RoutineStore.dates || RoutineStore.outdated)) {
 				void RoutineStore.refresh()
-			} else {
-				RoutineStore.entries = RoutineStore.dates = undefined
-				RoutineStore.dissolved = []
 			}
 		}
 	}
@@ -62,6 +65,7 @@ export class RoutineStore extends Controller {
 
 	static adopt(routines: ReadonlyArray<Routine>, entries?: ReadonlyArray<Entry>) {
 		RoutineStore.routines = new Map(routines.map(routine => [routine.id, routine]))
+		RoutineStore.outdated = !entries && !!RoutineStore.dates
 		if (entries) {
 			const members = Map.groupBy(entries, entry => entry.routineId)
 			const now = new Date()
@@ -85,8 +89,8 @@ export class RoutineStore extends Controller {
 				do {
 					RoutineStore.again = false
 					const [routines, entries, dissolved] = await Promise.all([ListRoutines.call(), ListRoutineEntries.call(RoutineStore.query), ListDissolvedRoutines.call()])
-					RoutineStore.dissolved = RoutineStore.showing ? dissolved : []
-					RoutineStore.adopt(routines, RoutineStore.showing ? entries : undefined)
+					RoutineStore.dissolved = dissolved
+					RoutineStore.adopt(routines, entries)
 				} while (RoutineStore.again)
 			} catch (error) {
 				console.warn('Fetching the routines failed:', error)
@@ -124,15 +128,20 @@ export class RoutineStore extends Controller {
 		return !!(dates?.next ?? dates?.last(1)[0])?.entry.type.isTask
 	}
 
+	/** The calendars whose routines the tab shows: those in sight that keep them. */
+	private static get calendarsShown() {
+		return new Set(Calendars.visible.filter(source => !source.routinesDisabled).map(source => source.id))
+	}
+
 	/** Those of the visible calendars, with their dates: the tab follows the calendars' eye. */
 	static get visible() {
-		const visible = new Set(Calendars.visible.map(source => source.id))
+		const visible = RoutineStore.calendarsShown
 		return [...RoutineStore.routines.values()].filter(routine => RoutineStore.datesOf(routine) && visible.has(routine.sourceId))
 	}
 
 	/** What the person said is no routine, of the visible calendars, by name. */
 	static get visibleDissolved() {
-		const visible = new Set(Calendars.visible.map(source => source.id))
+		const visible = RoutineStore.calendarsShown
 		return RoutineStore.dissolved.filter(routine => visible.has(routine.sourceId)).toSorted((a, b) => a.label.localeCompare(b.label))
 	}
 
@@ -170,17 +179,32 @@ export class RoutineStore extends Controller {
 		return [dates?.next, ...dates?.last(1) ?? []].find(date => !!date?.dayIn(TimeZone.localOrDefault)?.equals(today))
 	}
 
+	/** How long a routine may go without a date, and none ahead, before it is past. */
+	private static readonly quiet = { months: 3 }
+
+	/** Whether a routine ended: nothing ahead and nothing in the last months. The tab folds it under Past, its streak a record. */
+	static ended(routine: Routine) {
+		const dates = RoutineStore.datesOf(routine)
+		const last = dates?.last(1)[0]
+		return !!dates && !dates.next && (!last || (last.start ?? last.due)!.valueOf() < new DateTime().subtract(RoutineStore.quiet).valueOf())
+	}
+
 	/**
 	 * The routines as the tab lists them: those with a date today first, by its time of day, which is what is left to do;
-	 * then the rest, by their next date. What a routine is like, how often it comes or its calendar, its card tells.
+	 * then the rest, by their next date, those without one by how recently they came; last those past, latest first.
+	 * What a routine is like, how often it comes or its calendar, its card tells.
 	 */
 	static sectionsOf(routines: ReadonlyArray<Routine>) {
-		const at = (date?: EntryOccurrence) => (date?.start ?? date?.due)?.valueOf() ?? Infinity
+		const at = (date?: EntryOccurrence) => (date?.start ?? date?.due)?.valueOf()
+		const next = (routine: Routine) => at(RoutineStore.datesOf(routine)?.next) ?? Infinity
+		const last = (routine: Routine) => at(RoutineStore.datesOf(routine)?.last(1)[0]) ?? -Infinity
 		const today = routines.filter(routine => RoutineStore.onToday(routine))
-		const later = routines.filter(routine => !today.includes(routine))
+		const past = routines.filter(routine => !today.includes(routine) && RoutineStore.ended(routine))
+		const later = routines.filter(routine => !today.includes(routine) && !past.includes(routine))
 		return [
-			{ section: 'today', routines: today.toSorted((a, b) => at(RoutineStore.onToday(a)) - at(RoutineStore.onToday(b))) },
-			{ section: 'later', routines: later.toSorted((a, b) => at(RoutineStore.datesOf(a)?.next) - at(RoutineStore.datesOf(b)?.next)) },
+			{ section: 'today', routines: today.toSorted((a, b) => (at(RoutineStore.onToday(a)) ?? Infinity) - (at(RoutineStore.onToday(b)) ?? Infinity)) },
+			{ section: 'ongoing', routines: later.toSorted((a, b) => next(a) - next(b) || last(b) - last(a)) },
+			{ section: 'past', routines: past.toSorted((a, b) => last(b) - last(a)) },
 		].filter(({ routines }) => routines.length > 0) as Array<{ readonly section: RoutineSection, readonly routines: ReadonlyArray<Routine> }>
 	}
 

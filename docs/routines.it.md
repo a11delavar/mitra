@@ -22,7 +22,7 @@ Nella vista annuale, dove ogni giorno è piccolo, le routine sono ciò che vedi 
 Le voci formano una routine quando sono nello stesso calendario e hanno lo stesso titolo. Mitra riconosce una routine quando le voci vengono salvate o sincronizzate, e la conserva.
 
 - Una voce ricorrente è una routine fin dall'inizio, per quanto spesso si ripeta, purché abbia almeno quattro date.
-- Le voci che non si ripetono ne formano una non appena ce ne sono almeno quattro e si presentano circa ogni cinque settimane o più spesso, oppure mantengono un ritmo regolare, per esempio una volta all'anno. Così voci separate chiamate «Corsa» formano una routine proprio come una serie giornaliera.
+- Le voci che non si ripetono ne formano una non appena ce ne sono almeno quattro e mantengono un ritmo regolare, per esempio ogni pochi giorni, ogni settimana o una volta all'anno. Così voci separate chiamate «Corsa» formano una routine proprio come una serie giornaliera, mentre alcune ravvicinate e poi una lunga pausa, come i voli di due viaggi, no.
 
 I calendari che puoi solo leggere, come gli abbonamenti, non formano routine.
 
@@ -35,7 +35,7 @@ La frequenza di una routine decide come la mostrano le viste:
 
 ## La scheda Routine
 
-Apri **Routine** nella barra laterale, accanto a Calendari e Pianificazione, oppure scrivine il nome nella tavolozza dei comandi. **Oggi** mostra le routine di oggi, nell’ordine del loro orario, e **Più tardi** le altre, secondo la prossima data. Ogni riga mostra il nome della routine, quando si presenta e la sua serie: una fiamma del colore del suo calendario con quante occorrenze di fila hai rispettato. Una saltata o annullata interrompe la serie, e la fiamma diventa grigia.
+Apri **Routine** nella barra laterale, accanto a Calendari e Pianificazione, oppure scrivine il nome nella tavolozza dei comandi. **Oggi** mostra le routine di oggi, nell’ordine del loro orario, e **In corso** le altre, secondo la prossima data. Le routine che non si sono presentate negli ultimi tre mesi e non hanno nulla davanti si raccolgono sotto **Passate**, la più recente per prima. Per escludere le routine di un calendario, come quelle del tuo calendario di lavoro, scegli **Nascondi le sue routine** nel suo menu nella barra laterale. Ogni riga mostra il nome della routine, quando si presenta e la sua serie: una fiamma del colore del suo calendario con quante occorrenze di fila hai rispettato. Una saltata o annullata interrompe la serie, e la fiamma diventa grigia.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">

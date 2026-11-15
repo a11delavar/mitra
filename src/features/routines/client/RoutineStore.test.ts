@@ -76,7 +76,22 @@ describe('RoutineStore', () => {
 		))
 		assert.deepEqual(sections.map(({ section, routines }) => [section, routines.map(each => each.id)]), [
 			['today', ['meds', 'journal']],
-			['later', ['sync', 'gym', 'volleyball']],
+			['ongoing', ['sync', 'gym', 'volleyball']],
+		])
+	})
+
+	it('lists after those to come the ones that came lately, newest first, and folds away as past what came long ago', () => {
+		const ago = (days: number) => new DateTime().dayStart.subtract({ days }).add({ hours: 9 }).toISOString()
+		const sections = RoutineStore.sectionsOf(adopt(
+			routine('classes', { next: ago(1500) }),
+			routine('weekly', { rule: 'FREQ=WEEKLY' }),
+			routine('trip', { next: ago(30) }),
+			routine('course', { next: ago(400) }),
+			routine('visit', { next: ago(10) }),
+		))
+		assert.deepEqual(sections.map(({ section, routines }) => [section, routines.map(each => each.id)]), [
+			['ongoing', ['weekly', 'visit', 'trip']],
+			['past', ['course', 'classes']],
 		])
 	})
 

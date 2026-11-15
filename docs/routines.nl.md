@@ -22,7 +22,7 @@ In de jaarweergave, waar elke dag klein is, zijn routines het eerste wat je ziet
 Items vormen samen een routine als ze in dezelfde agenda staan en dezelfde titel hebben. Mitra herkent een routine zodra items worden opgeslagen of gesynchroniseerd, en onthoudt haar.
 
 - Een terugkerend item is meteen een routine, hoe vaak het ook terugkeert, zolang het minstens vier datums heeft.
-- Items die niet terugkeren, worden er een zodra er minstens vier zijn en ze ongeveer eens per vijf weken of vaker voorkomen, of een vast ritme aanhouden, zoals eens per jaar. Zo vormen losse items met de titel ‘Hardlopen’ net zo goed een routine als een dagelijkse reeks.
+- Items die niet terugkeren, worden er een zodra er minstens vier zijn en ze een vast ritme aanhouden, zoals om de paar dagen, wekelijks of eens per jaar. Zo vormen losse items met de titel ‘Hardlopen’ net zo goed een routine als een dagelijkse reeks, maar een paar dicht op elkaar en dan een lange pauze, zoals de vluchten van twee reizen, niet.
 
 Agenda's die je alleen kunt lezen, zoals abonnementen, vormen geen routines.
 
@@ -35,7 +35,7 @@ Hoe vaak een routine voorkomt, bepaalt hoe de weergaven haar tonen:
 
 ## Het tabblad Routines
 
-Open **Routines** in de zijbalk, naast Agenda's en Planning, of typ de naam in het opdrachtenpalet. **Vandaag** toont de routines van vandaag, op volgorde van hun tijd, en **Later** de rest, op hun volgende datum. Elke rij toont de naam van de routine, wanneer ze voorkomt, en haar reeks: een vlam in de kleur van haar agenda met hoeveel herhalingen je op rij hebt gedaan. Een gemiste of geannuleerde beëindigt de reeks, en de vlam wordt grijs.
+Open **Routines** in de zijbalk, naast Agenda's en Planning, of typ de naam in het opdrachtenpalet. **Vandaag** toont de routines van vandaag, op volgorde van hun tijd, en **Lopend** de rest, op hun volgende datum. Routines die de laatste drie maanden nergens voorkwamen en niets meer voor zich hebben, klappen weg onder **Voorbij**, de laatste eerst. Om de routines van een agenda weg te laten, zoals die van je werkagenda, kies je **Routines verbergen** in het menu ervan in de zijbalk. Elke rij toont de naam van de routine, wanneer ze voorkomt, en haar reeks: een vlam in de kleur van haar agenda met hoeveel herhalingen je op rij hebt gedaan. Een gemiste of geannuleerde beëindigt de reeks, en de vlam wordt grijs.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">

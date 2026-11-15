@@ -64,8 +64,9 @@ export class RoutineFlame extends Component {
 
 	protected override get template() {
 		const streak = this.streak
+		// An ended routine's streak is a record, under a flag, not a flame still burning.
 		return !streak ? html.nothing : html`
-			<mitra-icon icon="flame"></mitra-icon>
+			<mitra-icon icon=${this.routine && RoutineStore.ended(this.routine) ? 'flag' : 'flame'}></mitra-icon>
 			${streak.out ? html.nothing : html`<span class="count">${streak.length}</span>`}
 		`
 	}

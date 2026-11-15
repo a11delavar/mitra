@@ -22,7 +22,7 @@ In the year view, where every day is small, routines are what you see most: each
 Entries form a routine when they're in the same calendar and have the same title. Mitra recognizes a routine as entries are saved or synced, and keeps it.
 
 - A repeating entry is a routine from the start, however often it repeats, as long as it has at least four dates.
-- Entries that don't repeat become one once there are at least four of them, and they come about every five weeks or more often, or keep a regular rhythm, such as once a year. So separate entries called "Run" make a routine just as a daily series does.
+- Entries that don't repeat become one once there are at least four of them and they keep a regular rhythm, such as every few days, weekly or once a year. So separate entries called "Run" make a routine just as a daily series does, while a few close together and then a long gap, like the flights of two trips, don't.
 
 Calendars you can only read, such as subscriptions, form no routines.
 
@@ -35,7 +35,7 @@ How often a routine comes decides how the views draw it:
 
 ## The Routines tab
 
-Open **Routines** in the sidebar, beside Calendars and Planning, or type its name in the command palette. **Today** lists the routines that come today, in the order of their time of day, and **Later** the rest, by their next date. Each row shows the routine's name, when it comes, and its streak: a flame in its calendar's colour with how many of its occurrences in a row you kept. A missed or cancelled one ends the streak, and the flame turns grey.
+Open **Routines** in the sidebar, beside Calendars and Planning, or type its name in the command palette. **Today** lists the routines that come today, in the order of their time of day, and **Ongoing** the rest, by their next date. Routines that came nowhere in the last three months and have nothing ahead fold away under **Past**, the latest first. To leave a calendar's routines out, such as those of your work calendar, choose **Hide its routines** in its menu in the sidebar. Each row shows the routine's name, when it comes, and its streak: a flame in its calendar's colour with how many of its occurrences in a row you kept. A missed or cancelled one ends the streak, and the flame turns grey.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">

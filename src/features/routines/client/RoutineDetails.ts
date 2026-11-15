@@ -1,6 +1,6 @@
 import { Component, component, css, event, html, property, query, state } from '@a11d/lit'
 import { ResizeController } from '@3mo/resize-observer'
-import { DateTime } from '@3mo/date-time'
+import { DateTime, DateTimeRange } from '@3mo/date-time'
 import { DissolveRoutine, MergeRoutines, RenameRoutine, TrackRoutine } from '#operations'
 import { centered, devicePixel, type Popover } from '#design'
 import '#features/calendar/client/DateTime.calendar.js'
@@ -439,6 +439,13 @@ export class RoutineDetails extends Component {
 		`
 	}
 
+	/** The day an ended routine last came, which closes its span. */
+	private get ended() {
+		const last = RoutineStore.ended(this.routine!) ? RoutineStore.datesOf(this.routine!)?.last(1)[0] : undefined
+		const at = last?.start ?? last?.due
+		return at ? new DateTime(at.valueOf()) : undefined
+	}
+
 	/** The streak's tile: how it goes in a word, how many dates in a row, since when and the best, a flame behind. */
 	private get streakTemplate() {
 		const dates = RoutineStore.datesOf(this.routine!)!
@@ -449,14 +456,17 @@ export class RoutineDetails extends Component {
 		}
 		const best = Math.max(...streaks.map(({ length }) => length))
 		const since = streak.since?.dayIn(TimeZone.localOrDefault)
+		const until = this.ended
 		return html`
 			<div class="streak" ?data-out=${streak.out}>
-				<mitra-icon icon="flame"></mitra-icon>
-				<span class="label">${dates.standing.format()}</span>
+				<mitra-icon icon=${until ? 'flag' : 'flame'}></mitra-icon>
+				<span class="label">${until ? t('Ended') : !dates.next ? t('Nothing ahead') : dates.standing.format()}</span>
 				<span class="value">${streak.out || !since ? t('Ended') : t('${count:number} in a row', { count: streak.length })}</span>
 				<span class="sub">
 					${streak.out || !since ? t('best ${count:number} in a row', { count: best }) : html`
-						${t('since ${date}', { date: dayOf(since.toString()).format({ month: 'short', day: 'numeric' }) })}<br>
+						${until
+							? new DateTimeRange(dayOf(since.toString()), until).format({ month: 'short', day: 'numeric' })
+							: t('since ${date}', { date: dayOf(since.toString()).format({ month: 'short', day: 'numeric' }) })}<br>
 						${t('best ${count:number}', { count: best })}
 					`}
 				</span>
@@ -503,6 +513,9 @@ export class RoutineDetails extends Component {
 		const today = RoutineStore.todayOf(routine)
 		const task = RoutineStore.isTask(routine)
 		const time = RoutineStore.timeOf(routine)
+		const done = RoutineStore.ticks(routine) && !!today && dates.statusOf(today) === RoutineEntryOccurrenceStatus.Open
+		const cancel = !!today && RoutineStore.cancels(routine) && !!RoutineStore.occurrenceOf(today)
+		const show = !!today || !!dates.next
 		return html`
 			<mitra-popover sheet @openChange=${this.handleOpenChange}>
 				<div class="routine-detail">
@@ -512,16 +525,16 @@ export class RoutineDetails extends Component {
 						<mitra-popover-container>
 							<mitra-icon-button label=${t('Options')} icon="more-horizontal"></mitra-icon-button>
 							<mitra-menu slot="popover">
-								${!RoutineStore.ticks(routine) || !today || dates.statusOf(today) !== RoutineEntryOccurrenceStatus.Open ? html.nothing : html`
+								${!done ? html.nothing : html`
 									<mitra-menu-item icon="check" @click=${this.handleDone}>${t('Done today')}</mitra-menu-item>
 								`}
-								${!today || !RoutineStore.cancels(routine) || !RoutineStore.occurrenceOf(today) ? html.nothing : html`
+								${!cancel ? html.nothing : html`
 									<mitra-menu-item icon=${EntryStatus.Cancelled.iconFor(task ? EntryType.Task : EntryType.Event)} @click=${this.handleCancel}>${t('Cancelled')}</mitra-menu-item>
 								`}
-								${!today && !dates.next ? html.nothing : html`
+								${!show ? html.nothing : html`
 									<mitra-menu-item icon="calendar-search" @click=${this.handleShow}>${t('Show in calendar')}</mitra-menu-item>
 								`}
-								<hr>
+								${!done && !cancel && !show ? html.nothing : html`<hr>`}
 								<mitra-menu-item icon="pencil" @click=${this.startRename}>${t('Rename…')}</mitra-menu-item>
 								${!this.others.length ? html.nothing : html`
 									<mitra-menu-item icon="merge">
@@ -552,7 +565,9 @@ export class RoutineDetails extends Component {
 					${!routine.since ? html.nothing : html`
 						<div class="row">
 							<mitra-icon icon="calendar-days"></mitra-icon>
-							<span>${t('Since ${date}', { date: dayOf(routine.since).format({ dateStyle: 'long' }) })}</span>
+							<span>${this.ended
+								? new DateTimeRange(dayOf(routine.since), this.ended).format({ dateStyle: 'long' })
+								: t('Since ${date}', { date: dayOf(routine.since).format({ dateStyle: 'long' }) })}</span>
 						</div>
 					`}
 					${this.yearTemplate}

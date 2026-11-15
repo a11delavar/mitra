@@ -27,7 +27,8 @@ export class RoutineRecognition {
 
 	/**
 	 * Whether entries sharing a title are a routine: with four dates between them, where one repeats, however rarely, or
-	 * where they are entries of their own that come often enough to collapse in the year view, or keep their cadence.
+	 * where they are entries of their own that keep their cadence. Coming often is not enough: a trip's flights out and back
+	 * twice are close days far apart, whose median gap is short.
 	 */
 	static founds(entries: ReadonlyArray<Entry>, zone: TimeZone) {
 		if (entries.reduce((dates, entry) => dates + entry.occurrences.count, 0) < RoutineRecognition.floor) {
@@ -38,7 +39,7 @@ export class RoutineRecognition {
 		}
 		const days = entries.flatMap(entry => entry.occurrences.single.dayIn(zone) ?? [])
 		const cadence = RoutineCadence.between(days)
-		return !!cadence && (cadence.collapsesIn('month') || cadence.keptBy(days))
+		return !!cadence?.keptBy(days)
 	}
 
 	/** Whether an entry may still be placed: in no routine, not taken out of them all, and no availability. */

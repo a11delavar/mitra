@@ -1,7 +1,7 @@
 import { Component, component, html, css, property, state, event, eventListener, unsafeCSS, ifDefined } from '@a11d/lit'
 import { ReorderabilityController, ReorderabilityState } from '@3mo/reorderability'
 import { MediaQueryController } from '@3mo/media-query-observer'
-import { RenameSource, RecolorSource, CreateSource, ReimportSource, SetDefaultCalendar, DisconnectIntegration, ReimportIntegration, RenameIntegration } from '#operations'
+import { RenameSource, RecolorSource, SetSourceRoutines, CreateSource, ReimportSource, SetDefaultCalendar, DisconnectIntegration, ReimportIntegration, RenameIntegration } from '#operations'
 import { focusRing, windowDragHandle, scrollbar } from '#design'
 import { Calendars } from '#features/sources/client/Calendars.js'
 import { DialogAbout } from '#features/about/client/DialogAbout.js'
@@ -704,6 +704,12 @@ export class Sidebar extends Component {
 
 	protected override createRenderRoot() { return this }
 
+	private async toggleRoutines(source: Source) {
+		await SetSourceRoutines.call({ id: source.id, disabled: !source.routinesDisabled })
+		source.routinesDisabled = !source.routinesDisabled
+		PageState.changed()
+	}
+
 	private async setSourceColor(source: Source, color: Color | undefined, popover: HTMLElement) {
 		if (color) {
 			await RecolorSource.call({ id: source.id, color })
@@ -1067,6 +1073,7 @@ export class Sidebar extends Component {
 						` : html`
 							<mitra-menu-item icon="scan-eye" ?disabled=${this.isOnlyVisible(source)} @click=${() => this.toggleSolo(source)}>${t('Only show this calendar')}</mitra-menu-item>
 						`}
+						<mitra-menu-item icon="activity" @click=${() => this.toggleRoutines(source)}>${source.routinesDisabled ? t('Show its routines') : t('Hide its routines')}</mitra-menu-item>
 						<mitra-menu-item icon="arrow-up" ?disabled=${index === 0} @click=${() => this.moveSource(integration, source, -1)}>${t('Move up')}</mitra-menu-item>
 						<mitra-menu-item icon="arrow-down" ?disabled=${index === count - 1} @click=${() => this.moveSource(integration, source, 1)}>${t('Move down')}</mitra-menu-item>
 						${!Calendars.canCopyEntriesOut(source) ? html.nothing : html`

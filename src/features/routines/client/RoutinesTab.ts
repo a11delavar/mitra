@@ -14,7 +14,8 @@ export class RoutinesTab extends Component {
 	private static headingOf(section: RoutineSection) {
 		switch (section) {
 			case 'today': return t('Today')
-			case 'later': return t('Later')
+			case 'ongoing': return t('Ongoing')
+			case 'past': return t('Past')
 		}
 	}
 
@@ -73,6 +74,18 @@ export class RoutinesTab extends Component {
 
 					&[open] > summary > mitra-icon {
 						rotate: 90deg;
+					}
+
+					/* What came long ago and comes no more, folded: its rows as the sections above lay theirs. */
+					/* Margins, not a flex gap: a details element lays what it folds in a box of its own, which a gap treats as one item. */
+					&.past {
+						> summary {
+							margin-block-end: 0.35rem;
+						}
+
+						> mitra-routine-row + mitra-routine-row {
+							margin-block-start: 0.35rem;
+						}
 					}
 
 					> ul {
@@ -147,7 +160,16 @@ export class RoutinesTab extends Component {
 					<mitra-icon icon="activity"></mitra-icon>
 					<span>${t('What you keep doing shows up here: an entry that repeats, or four entries with one title.')}</span>
 				</div>
-			` : sections.map(({ section, routines }) => html`
+			` : sections.map(({ section, routines }) => section === 'past' ? html`
+				<details class="past" @toggle=${RoutinesTab.handleDissolvedToggle}>
+					<summary>
+						<mitra-icon icon="chevron-right"></mitra-icon>
+						${RoutinesTab.headingOf(section)}
+						<span class="count">${routines.length.format()}</span>
+					</summary>
+					${repeat(routines, routine => routine.id, routine => html`<mitra-routine-row .routine=${routine}></mitra-routine-row>`)}
+				</details>
+			` : html`
 				<section>
 					<h2>${RoutinesTab.headingOf(section)}</h2>
 					${repeat(routines, routine => routine.id, routine => html`<mitra-routine-row .routine=${routine}></mitra-routine-row>`)}

@@ -22,7 +22,7 @@ Na vista de ano, em que cada dia é pequeno, as rotinas são o que mais aparece:
 As entradas formam uma rotina quando estão no mesmo calendário e têm o mesmo título. O Mitra reconhece uma rotina quando as entradas são salvas ou sincronizadas, e a mantém.
 
 - Uma entrada recorrente é uma rotina desde o início, não importa com que frequência se repita, desde que tenha pelo menos quatro datas.
-- Entradas que não se repetem formam uma assim que houver pelo menos quatro delas e elas aparecerem mais ou menos a cada cinco semanas ou com mais frequência, ou mantiverem um ritmo regular, como uma vez por ano. Assim, entradas separadas chamadas "Corrida" formam uma rotina como uma série diária formaria.
+- Entradas que não se repetem formam uma assim que houver pelo menos quatro delas e elas mantiverem um ritmo regular, como a cada poucos dias, toda semana ou uma vez por ano. Assim, entradas separadas chamadas "Corrida" formam uma rotina como uma série diária formaria, enquanto algumas próximas umas das outras e depois um longo intervalo, como os voos de duas viagens, não.
 
 Calendários que você só pode ler, como as assinaturas, não formam rotinas.
 
@@ -35,7 +35,7 @@ A frequência de uma rotina decide como as vistas a mostram:
 
 ## A aba Rotinas
 
-Abra **Rotinas** na barra lateral, ao lado de Calendários e Planeamento, ou digite o nome na paleta de comandos. **Hoje** mostra as rotinas de hoje, pela hora, e **Mais tarde** as restantes, pela próxima data. Cada linha mostra o nome da rotina, quando ela acontece e a sua sequência: uma chama da cor do seu calendário com quantas ocorrências seguidas você cumpriu. Uma perdida ou cancelada termina a sequência, e a chama fica cinza.
+Abra **Rotinas** na barra lateral, ao lado de Calendários e Planeamento, ou digite o nome na paleta de comandos. **Hoje** mostra as rotinas de hoje, pela hora, e **Em curso** as restantes, pela próxima data. As rotinas que não aconteceram nos últimos três meses e não têm nada pela frente recolhem-se em **Passadas**, a mais recente primeiro. Para deixar de fora as rotinas de um calendário, como as do seu calendário de trabalho, escolha **Ocultar as rotinas** no menu dele na barra lateral. Cada linha mostra o nome da rotina, quando ela acontece e a sua sequência: uma chama da cor do seu calendário com quantas ocorrências seguidas você cumpriu. Uma perdida ou cancelada termina a sequência, e a chama fica cinza.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">

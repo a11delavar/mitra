@@ -242,6 +242,7 @@ describe('RoutineRecognition', () => {
 			assert.equal(founds(on(0, { recurrence: rule(RecurrenceFrequency.Daily, { count: 3 }) })), false)
 			assert.equal(founds(on(0, { recurrence: rule(RecurrenceFrequency.Daily, { count: 3 }) }), on(9)), true)
 			assert.equal(founds(on(0, { start: undefined }), on(2), on(4), on(6)), false)
+			assert.equal(founds(on(0), on(3), on(200), on(203)), false, 'two trips, out and back')
 		})
 
 		it('takes any entry that repeats, however rarely', () => {

@@ -22,7 +22,7 @@ W widoku roku, w którym każdy dzień jest mały, rutyny widać najwyraźniej: 
 Wpisy tworzą rutynę, gdy są w tym samym kalendarzu i mają ten sam tytuł. Mitra rozpoznaje rutynę, gdy wpisy są zapisywane lub synchronizowane, i ją zapamiętuje.
 
 - Wpis cykliczny jest rutyną od początku, niezależnie od tego, jak często się powtarza, o ile ma co najmniej cztery daty.
-- Wpisy, które się nie powtarzają, stają się rutyną, gdy jest ich co najmniej cztery i występują mniej więcej co pięć tygodni lub częściej albo zachowują regularny rytm, na przykład raz w roku. Dlatego osobne wpisy o tytule „Bieganie” tworzą rutynę tak samo jak codzienna seria.
+- Wpisy, które się nie powtarzają, stają się rutyną, gdy jest ich co najmniej cztery i zachowują regularny rytm, na przykład co kilka dni, co tydzień albo raz w roku. Dlatego osobne wpisy o tytule „Bieganie” tworzą rutynę tak samo jak codzienna seria, a kilka blisko siebie, a potem długa przerwa, jak loty z dwóch podróży, już nie.
 
 Kalendarze, które możesz tylko odczytywać, takie jak subskrypcje, nie tworzą rutyn.
 
@@ -35,7 +35,7 @@ To, jak często rutyna występuje, decyduje o tym, jak pokazują ją widoki:
 
 ## Karta Rutyny
 
-Otwórz **Rutyny** na pasku bocznym, obok Kalendarzy i Planowania, albo wpisz jej nazwę w palecie poleceń. **Dzisiaj** pokazuje rutyny przypadające na dziś, według godziny, a **Później** pozostałe, według najbliższego terminu. Każdy wiersz pokazuje nazwę rutyny, kiedy występuje, oraz jej serię: płomień w kolorze jej kalendarza z liczbą wystąpień wykonanych z rzędu. Pominięte lub anulowane wystąpienie kończy serię, a płomień robi się szary.
+Otwórz **Rutyny** na pasku bocznym, obok Kalendarzy i Planowania, albo wpisz jej nazwę w palecie poleceń. **Dzisiaj** pokazuje rutyny przypadające na dziś, według godziny, a **Trwające** pozostałe, według najbliższego terminu. Rutyny, które nie wystąpiły w ostatnich trzech miesiącach i nie mają nic przed sobą, zwijają się pod **Minione**, od najnowszej. Aby pominąć rutyny kalendarza, na przykład kalendarza pracy, wybierz **Ukryj jego rutyny** w jego menu na pasku bocznym. Każdy wiersz pokazuje nazwę rutyny, kiedy występuje, oraz jej serię: płomień w kolorze jej kalendarza z liczbą wystąpień wykonanych z rzędu. Pominięte lub anulowane wystąpienie kończy serię, a płomień robi się szary.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">

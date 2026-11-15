@@ -22,7 +22,7 @@ In der Jahresansicht, in der jeder Tag klein ist, sind Routinen das, was du am m
 Einträge bilden eine Routine, wenn sie im selben Kalender liegen und denselben Titel haben. Mitra erkennt eine Routine, wenn Einträge gespeichert oder synchronisiert werden, und behält sie.
 
 - Ein wiederkehrender Eintrag ist von Anfang an eine Routine, egal wie oft er sich wiederholt, sofern er mindestens vier Termine hat.
-- Einträge, die sich nicht wiederholen, werden zur Routine, sobald es mindestens vier davon gibt und sie etwa alle fünf Wochen oder öfter vorkommen oder einen regelmäßigen Rhythmus halten, etwa einmal im Jahr. So ergeben einzelne Einträge namens „Laufen“ eine Routine, genau wie eine tägliche Serie.
+- Einträge, die sich nicht wiederholen, werden zur Routine, sobald es mindestens vier davon gibt und sie einen regelmäßigen Rhythmus halten, etwa alle paar Tage, wöchentlich oder einmal im Jahr. So ergeben einzelne Einträge namens „Laufen“ eine Routine, genau wie eine tägliche Serie, ein paar dicht aufeinanderfolgende und dann eine lange Pause, wie die Flüge zweier Reisen, dagegen nicht.
 
 Kalender, die du nur lesen kannst, etwa Abonnements, bilden keine Routinen.
 
@@ -35,7 +35,7 @@ Wie oft eine Routine vorkommt, entscheidet, wie die Ansichten sie zeigen:
 
 ## Der Tab Routinen
 
-Öffne **Routinen** in der Seitenleiste, neben Kalender und Planung, oder tippe den Namen in die Befehlspalette. **Heute** zeigt die Routinen, die heute vorkommen, nach ihrer Uhrzeit, und **Später** die übrigen, nach ihrem nächsten Termin. Jede Zeile zeigt den Namen der Routine, wann sie vorkommt, und ihre Serie: eine Flamme in der Farbe ihres Kalenders mit der Zahl der Wiederholungen, die du in Folge eingehalten hast. Eine verpasste oder abgesagte beendet die Serie, und die Flamme wird grau.
+Öffne **Routinen** in der Seitenleiste, neben Kalender und Planung, oder tippe den Namen in die Befehlspalette. **Heute** zeigt die Routinen, die heute vorkommen, nach ihrer Uhrzeit, und **Laufend** die übrigen, nach ihrem nächsten Termin. Routinen, die in den letzten drei Monaten nicht vorkamen und nichts mehr vor sich haben, klappen unter **Vergangen** weg, die jüngste zuerst. Um die Routinen eines Kalenders wegzulassen, etwa die deines Arbeitskalenders, wähle in seinem Menü in der Seitenleiste **Routinen ausblenden**. Jede Zeile zeigt den Namen der Routine, wann sie vorkommt, und ihre Serie: eine Flamme in der Farbe ihres Kalenders mit der Zahl der Wiederholungen, die du in Folge eingehalten hast. Eine verpasste oder abgesagte beendet die Serie, und die Flamme wird grau.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">

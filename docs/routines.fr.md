@@ -22,7 +22,7 @@ Dans la vue année, où chaque jour est petit, les routines sont ce que vous voy
 Des entrées forment une routine lorsqu'elles sont dans le même calendrier et portent le même titre. Mitra reconnaît une routine quand les entrées sont enregistrées ou synchronisées, et la conserve.
 
 - Une entrée récurrente est une routine dès le départ, quelle que soit sa fréquence, à condition d'avoir au moins quatre dates.
-- Des entrées qui ne se répètent pas en forment une dès qu'il y en a au moins quatre et qu'elles reviennent environ toutes les cinq semaines ou plus souvent, ou qu'elles gardent un rythme régulier, par exemple une fois par an. Ainsi, des entrées séparées appelées « Course » forment une routine comme le ferait une série quotidienne.
+- Des entrées qui ne se répètent pas en forment une dès qu'il y en a au moins quatre et qu'elles gardent un rythme régulier, par exemple tous les quelques jours, chaque semaine ou une fois par an. Ainsi, des entrées séparées appelées « Course » forment une routine comme le ferait une série quotidienne, alors que quelques-unes rapprochées puis un long intervalle, comme les vols de deux voyages, non.
 
 Les calendriers que vous pouvez seulement lire, comme les abonnements, ne forment aucune routine.
 
@@ -35,7 +35,7 @@ La fréquence d'une routine décide de la façon dont les vues l'affichent :
 
 ## L’onglet Routines
 
-Ouvrez **Routines** dans la barre latérale, à côté d’Agendas et Planification, ou tapez son nom dans la palette de commandes. **Aujourd’hui** montre les routines du jour, dans l’ordre de leur heure, et **Plus tard** les autres, selon leur prochaine date. Chaque ligne montre le nom de la routine, quand elle revient, et sa série : une flamme de la couleur de son calendrier avec le nombre d’occurrences tenues d’affilée. Une occurrence manquée ou annulée met fin à la série, et la flamme devient grise.
+Ouvrez **Routines** dans la barre latérale, à côté d’Agendas et Planification, ou tapez son nom dans la palette de commandes. **Aujourd’hui** montre les routines du jour, dans l’ordre de leur heure, et **En cours** les autres, selon leur prochaine date. Les routines qui ne sont pas revenues depuis trois mois et n’ont plus rien à venir se replient sous **Passées**, la plus récente d’abord. Pour écarter les routines d’un agenda, comme celles de votre agenda de travail, choisissez **Masquer ses routines** dans son menu de la barre latérale. Chaque ligne montre le nom de la routine, quand elle revient, et sa série : une flamme de la couleur de son calendrier avec le nombre d’occurrences tenues d’affilée. Une occurrence manquée ou annulée met fin à la série, et la flamme devient grise.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">

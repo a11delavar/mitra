@@ -22,7 +22,7 @@ En la vista de año, donde cada día es pequeño, las rutinas son lo que más se
 Las entradas forman una rutina cuando están en el mismo calendario y tienen el mismo título. Mitra reconoce una rutina cuando las entradas se guardan o se sincronizan, y la conserva.
 
 - Una entrada que se repite es una rutina desde el principio, sea cual sea su frecuencia, siempre que tenga al menos cuatro fechas.
-- Las entradas que no se repiten forman una en cuanto hay al menos cuatro y aparecen más o menos cada cinco semanas o con más frecuencia, o mantienen un ritmo regular, como una vez al año. Así, varias entradas separadas llamadas «Correr» forman una rutina igual que una serie diaria.
+- Las entradas que no se repiten forman una en cuanto hay al menos cuatro y mantienen un ritmo regular, como cada pocos días, cada semana o una vez al año. Así, varias entradas separadas llamadas «Correr» forman una rutina igual que una serie diaria, mientras que unas pocas seguidas y luego un largo vacío, como los vuelos de dos viajes, no.
 
 Los calendarios que solo puedes leer, como las suscripciones, no forman rutinas.
 
@@ -35,7 +35,7 @@ La frecuencia de una rutina decide cómo la muestran las vistas:
 
 ## La pestaña Rutinas
 
-Abre **Rutinas** en la barra lateral, junto a Calendarios y Planificación, o escribe su nombre en la paleta de comandos. **Hoy** muestra las rutinas de hoy, según su hora, y **Más tarde** las demás, por su próxima fecha. Cada fila muestra el nombre de la rutina, cuándo aparece y su racha: una llama del color de su calendario con cuántas repeticiones seguidas cumpliste. Una que faltaste o cancelaste termina la racha, y la llama se vuelve gris.
+Abre **Rutinas** en la barra lateral, junto a Calendarios y Planificación, o escribe su nombre en la paleta de comandos. **Hoy** muestra las rutinas de hoy, según su hora, y **En curso** las demás, por su próxima fecha. Las rutinas que no aparecieron en los últimos tres meses y no tienen nada por delante se pliegan en **Pasadas**, la más reciente primero. Para dejar fuera las rutinas de un calendario, como las de tu calendario de trabajo, elige **Ocultar sus rutinas** en su menú de la barra lateral. Cada fila muestra el nombre de la rutina, cuándo aparece y su racha: una llama del color de su calendario con cuántas repeticiones seguidas cumpliste. Una que faltaste o cancelaste termina la racha, y la llama se vuelve gris.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">

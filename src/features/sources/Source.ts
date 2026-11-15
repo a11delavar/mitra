@@ -122,6 +122,10 @@ export class Source extends Entity {
 
 	@property({ type: 'json', nullable: true }) syncState?: Record<string, any>
 
+	/** Whether the Routines tab leaves out what this calendar keeps doing: a work calendar's meetings are no routine of the person's. */
+	@equality()
+	@property({ type: 'boolean', fieldName: 'routines_disabled' }) routinesDisabled = false
+
 	/**
 	 * Whether entries of `type` can live here. The provider's list decides for events and tasks. Availability
 	 * fits any calendar, since Mitra stores it; whether a provider takes part is `capabilities.availability`.

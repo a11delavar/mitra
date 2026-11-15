@@ -336,6 +336,7 @@ declare global {
 		"Hide cancelled": unknown
 		"Hide column": unknown
 		"Hide done tasks": unknown
+		"Hide its routines": unknown
 		"Hide the other time zones": unknown
 		"HideAvailabilitySetting.Keywords": unknown
 		"HideCancelledSetting.Keywords": unknown
@@ -367,7 +368,6 @@ declare global {
 		"Language": unknown
 		"last seen ${when}": unknown
 		"last used ${date}": unknown
-		"Later": unknown
 		"Latest": unknown
 		"Latin America": unknown
 		"Leave the originals here and add a copy over there": unknown
@@ -449,6 +449,7 @@ declare global {
 		"Not a routine": unknown
 		"Not a routine?": unknown
 		"Not routines": unknown
+		"Nothing ahead": unknown
 		"Nothing from the file was added.": unknown
 		"Nothing is deleted here until its copy has landed": unknown
 		"Nothing planned yet. Draw a task on the row below": unknown
@@ -472,6 +473,7 @@ declare global {
 		"On track": unknown
 		"One calendar to plan your events and tasks": unknown
 		"One for each connection, so you can revoke each on its own": unknown
+		"Ongoing": unknown
 		"Only Show ${name}": unknown
 		"Only show this calendar": unknown
 		"Only the organizer can change participants": unknown
@@ -490,6 +492,7 @@ declare global {
 		"Participants": unknown
 		"Password": unknown
 		"Password (optional)": unknown
+		"Past": unknown
 		"Past 30 days": unknown
 		"Past year": unknown
 		"Patches": unknown
@@ -576,6 +579,7 @@ declare global {
 		"Show fewer participants": unknown
 		"Show in calendar": unknown
 		"Show in description": unknown
+		"Show its routines": unknown
 		"Show only one calendar, or bring the rest back": unknown
 		"Show previously visible calendars": unknown
 		"Show Previously Visible Calendars": unknown
