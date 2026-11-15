@@ -56,7 +56,7 @@ Dzisiejszy status jest na końcu wiersza rutyny: pole wyboru zadania, które odh
 
 ## Szczegóły rutyny
 
-Kliknij wiersz, aby zobaczyć więcej: od kiedy trwa rutyna, jej ostatnie tygodnie jako siatkę dni, a pod nią trzy kafelki: jej serię z nagłówkiem mówiącym, jak idzie, na przykład **Na dobrej drodze** albo **Słabnie**, i twoim rekordem; ile z ostatniego roku wykonałeś; oraz w który dzień tygodnia najczęściej odpada. Jej menu **⋯** ma **Zrobione dziś** dla zadania, **Anulowane**, aby anulować dzisiejsze wystąpienie, i **Pokaż w kalendarzu**, aby otworzyć następne. Odznacz tam **Śledź, jak idzie** przy rutynie, której tylko dotrzymujesz, jak rachunek czy spotkanie: nie pokazuje wtedy serii, a jej szczegóły tylko siatkę.
+Kliknij wiersz, aby zobaczyć więcej: od kiedy trwa rutyna, jej ostatnie tygodnie jako siatkę dni, a pod nią trzy kafelki: jej serię z nagłówkiem mówiącym, jak idzie, na przykład **Na dobrej drodze** albo **Słabnie**, **Nic w planach**, gdy nie ma zaplanowanej żadnej daty, albo **Zakończona**, gdy trafiła do **Minione**, i twoim rekordem; ile z ostatniego roku wykonałeś; oraz w który dzień tygodnia najczęściej odpada. Jej menu **⋯** ma **Zrobione dziś** dla zadania, **Anulowane**, aby anulować dzisiejsze wystąpienie, i **Pokaż w kalendarzu**, aby otworzyć następne. Odznacz tam **Śledź, jak idzie** przy rutynie, której tylko dotrzymujesz, jak rachunek czy spotkanie: nie pokazuje wtedy serii, a jej szczegóły tylko siatkę.
 
 ## Poprawianie rutyny
 

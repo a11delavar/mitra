@@ -142,3 +142,21 @@ still('routines', async ({ browser, open, text }) => {
 	const bottom = await browser.evaluate<number>('return document.querySelector("mitra-routine-details mitra-popover").getBoundingClientRect().bottom')
 	return { x: 0, y: 0, width: details.view.width, height: Math.round(Math.max(620, bottom + 16)) }
 })
+
+/** A calendar's menu in the sidebar, open on its colours: the new ones and any colour, beside the calendars it paints. */
+still('personalization', async ({ browser, open, language }) => {
+	await open()
+	// The sidebar keeps the tab last open, which the routines' scene leaves on Routines.
+	await click(browser, sidebarTab('calendars'))
+	const options = `[...document.querySelectorAll('mitra-sidebar .sources > .source mitra-icon-button')].find(button => button.getAttribute('label') === ${JSON.stringify(appText('Calendar options', language))})`
+	await click(browser, options)
+	const menu = `[...document.querySelectorAll('mitra-sidebar mitra-menu')].find(menu => menu.querySelector('mitra-color-picker') && menu.getBoundingClientRect().width > 0)`
+	await waitFor(() => browser.evaluate<boolean>(`return !!${menu}`), 'the calendar menu')
+	await browser.evaluate('await new Promise(resolve => setTimeout(resolve, 400))')
+	return browser.evaluate<Clip>(`
+		const { right, top, bottom } = ${menu}.getBoundingClientRect()
+		const heading = document.querySelector('mitra-sidebar .integration > header').getBoundingClientRect()
+		const y = Math.max(0, Math.round(Math.min(top - 28, heading.top - 12)))
+		return { x: 0, y, width: Math.round(right + 28), height: Math.round(bottom + 28) - y }
+	`)
+})

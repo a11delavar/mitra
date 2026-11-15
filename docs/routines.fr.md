@@ -56,7 +56,7 @@ Le statut du jour se trouve au bout de la ligne d’une routine : la case à coc
 
 ## Le détail d’une routine
 
-Cliquez sur une ligne pour en voir plus : depuis quand la routine existe, ses dernières semaines en grille de jours, et dessous trois tuiles : sa série, titrée par la façon dont elle se passe, comme **Sur les rails** ou **En perte de vitesse**, avec votre record ; la part de l’année écoulée que vous avez tenue ; et le jour de la semaine où elle flanche le plus. Son menu **⋯** propose **Fait aujourd’hui** pour une tâche, **Annulé** pour annuler l’occurrence du jour, et **Afficher dans le calendrier** pour ouvrir la suivante. Décochez-y **Suivre son évolution** pour une routine que vous respectez sans l’entretenir, comme une facture ou une réunion : elle ne montre alors plus de série, et son détail seulement sa grille.
+Cliquez sur une ligne pour en voir plus : depuis quand la routine existe, ses dernières semaines en grille de jours, et dessous trois tuiles : sa série, titrée par la façon dont elle se passe, comme **Sur les rails** ou **En perte de vitesse**, **Rien à venir** dès qu’aucune date n’est prévue, ou **Terminée** dès qu’elle est passée dans **Passées**, avec votre record ; la part de l’année écoulée que vous avez tenue ; et le jour de la semaine où elle flanche le plus. Son menu **⋯** propose **Fait aujourd’hui** pour une tâche, **Annulé** pour annuler l’occurrence du jour, et **Afficher dans le calendrier** pour ouvrir la suivante. Décochez-y **Suivre son évolution** pour une routine que vous respectez sans l’entretenir, comme une facture ou une réunion : elle ne montre alors plus de série, et son détail seulement sa grille.
 
 ## Corriger une routine
 

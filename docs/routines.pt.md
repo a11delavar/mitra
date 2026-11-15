@@ -56,7 +56,7 @@ O estado de hoje fica no fim da linha de uma rotina: a caixa de seleção de uma
 
 ## O detalhe de uma rotina
 
-Clique em uma linha para ver mais: desde quando a rotina existe, as suas últimas semanas como uma grade de dias e, abaixo, três blocos: a sua sequência, encabeçada por como ela vai, como **Nos trilhos** ou **Perdendo o ritmo**, com o seu recorde; quanto do último ano você cumpriu; e o dia da semana em que ela mais falha. O seu menu **⋯** oferece **Feito hoje** para uma tarefa, **Cancelado** para cancelar a ocorrência de hoje e **Mostrar no calendário** para abrir a próxima. Desmarque ali **Acompanhar como vai** para uma rotina que você apenas cumpre, como uma conta ou uma reunião: ela deixa de mostrar sequência, e o seu detalhe só a grade.
+Clique em uma linha para ver mais: desde quando a rotina existe, as suas últimas semanas como uma grade de dias e, abaixo, três blocos: a sua sequência, encabeçada por como ela vai, como **Nos trilhos** ou **Perdendo o ritmo**, **Nada pela frente** quando nenhuma data está planejada, ou **Terminou** quando passou para **Passadas**, com o seu recorde; quanto do último ano você cumpriu; e o dia da semana em que ela mais falha. O seu menu **⋯** oferece **Feito hoje** para uma tarefa, **Cancelado** para cancelar a ocorrência de hoje e **Mostrar no calendário** para abrir a próxima. Desmarque ali **Acompanhar como vai** para uma rotina que você apenas cumpre, como uma conta ou uma reunião: ela deixa de mostrar sequência, e o seu detalhe só a grade.
 
 ## Corrigir uma rotina
 

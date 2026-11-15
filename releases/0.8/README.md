@@ -1,10 +1,11 @@
 ---
 title: Routines & streaks, Todoist, event status and due dates at a glance
+date: 2026-11-15
 ---
 Mitra 0.8 helps you keep up the things you do again and again, and keeps a record of what didn't happen.
 
 ## Routines & streaks
-Mitra already gathers the things you do often, such as the gym or a haircut every five weeks, into routines. Now they get a place of their own, where a flame shows each routine's streak at a glance, and its detail the days you kept, cancelled or missed. You can rename a routine, merge two that belong together, or tell Mitra that something isn't a routine at all. Routines also stay steady in the month and year views however far you scroll, and your AI connector can tell you how they are going.
+Mitra already gathers the things you do often, such as the gym or a haircut every five weeks, into routines. Now they get a place of their own, where a flame shows each routine's streak at a glance, and its detail the days you kept, cancelled or missed. You can rename a routine, merge two that belong together, or tell Mitra that something isn't a routine at all. Routines also stay steady in the month and year views however far you scroll, and your AI connector can tell you how they are going. The tab lists the routines that come **Today** first, then the **Ongoing** ones, and folds those that came long ago away under **Past**. To leave out a calendar's routines, such as your work calendar's, choose **Hide its routines** in its menu.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
@@ -45,6 +46,11 @@ Docs: [Planning](../../docs/planning.md#set-a-due-date)
 
 ## Personalization
 Give each calendar one of two more colors, or any color you like. Rename an account's heading by double-clicking it, and hide all of its calendars at once.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="personalization-dark.webp">
+	<img src="personalization-light.webp" alt="A calendar's menu open in the sidebar, its colors offered beside the calendars they paint">
+</picture>
 
 ## Custom CSS
 Mitra's look is plain CSS, and now you can add your own on top of it. Open **Settings → General → Custom CSS** and type a rule: Mitra wears it as you type and keeps it on your account, so it follows you to every device. Give Mitra your favorite color, square off every corner or hide what you never use. Where people sign in, an administrator also finds **Custom CSS for everyone** under **Administration**, to give the whole server its look.
@@ -87,4 +93,7 @@ Mitra is learning Arabic, Russian, Polish and Dutch. Each release has made Mitra
 </picture>
 
 ## Contributors
+- [@a11delavar](https://github.com/a11delavar)
 - [@jkngale](https://github.com/jkngale): the groundwork for Todoist
+- [@d8monx](https://github.com/d8monx): links to each integration's docs in the dialog that connects it
+- [@libnewton](https://github.com/libnewton): CalDAV entries without an .ics extension

@@ -4,7 +4,7 @@ title: Rutyny i serie, Todoist, status wydarzeń i terminy na pierwszy rzut oka
 Mitra 0.8 pomaga ci wytrwać w tym, co robisz regularnie, i zapisuje, co się nie odbyło.
 
 ## Rutyny i serie
-Mitra już wcześniej zbierała w rutyny to, co robisz często, na przykład siłownię albo strzyżenie co pięć tygodni. Teraz rutyny mają własne miejsce, w którym płomień na pierwszy rzut oka pokazuje serię każdej z nich, a jej szczegóły dni wykonane, anulowane lub pominięte. Możesz zmienić nazwę rutyny, połączyć dwie, które do siebie należą, albo zaznaczyć, że coś wcale nie jest rutyną. W widokach miesiąca i roku rutyny wyglądają tak samo bez względu na to, jak daleko przewiniesz, a twój konektor AI potrafi podsumować, jak ci idą.
+Mitra już wcześniej zbierała w rutyny to, co robisz często, na przykład siłownię albo strzyżenie co pięć tygodni. Teraz rutyny mają własne miejsce, w którym płomień na pierwszy rzut oka pokazuje serię każdej z nich, a jej szczegóły dni wykonane, anulowane lub pominięte. Możesz zmienić nazwę rutyny, połączyć dwie, które do siebie należą, albo zaznaczyć, że coś wcale nie jest rutyną. W widokach miesiąca i roku rutyny wyglądają tak samo bez względu na to, jak daleko przewiniesz, a twój konektor AI potrafi podsumować, jak ci idą. Karta pokazuje najpierw rutyny na **Dzisiaj**, potem **Trwające**, a te sprzed dawna zwija pod **Minione**. Aby pominąć rutyny jakiegoś kalendarza, na przykład kalendarza pracy, wybierz w jego menu **Ukryj jego rutyny**.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
@@ -45,6 +45,11 @@ Dokumentacja: [Ustawianie terminu](../../docs/planning.md#set-a-due-date)
 
 ## Personalizacja
 Nadaj każdemu kalendarzowi jeden z dwóch nowych kolorów albo dowolny własny. Zmień nazwę nagłówka konta dwukrotnym kliknięciem i ukryj wszystkie jego kalendarze naraz.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="personalization-dark.webp">
+	<img src="personalization-light.webp" alt="Menu kalendarza otwarte na pasku bocznym, z kolorami obok kalendarzy, które barwią">
+</picture>
 
 ## Własny CSS
 Wygląd aplikacji Mitra to zwykły CSS, a teraz możesz dodać na nim własny. Otwórz **Ustawienia → Ogólne → Własny CSS** i wpisz regułę: Mitra stosuje ją w trakcie pisania i zapisuje na twoim koncie, więc towarzyszy ci na każdym urządzeniu. Nadaj aplikacji swój ulubiony kolor, wyprostuj wszystkie zaokrąglone rogi albo ukryj to, czego nigdy nie używasz. Tam, gdzie loguje się wiele osób, administrator znajdzie też w **Administracja** ustawienie **Własny CSS dla wszystkich**, które nadaje wygląd całemu serwerowi.
@@ -87,4 +92,7 @@ Mitra uczy się arabskiego, rosyjskiego, polskiego i niderlandzkiego. Każde kol
 </picture>
 
 ## Współtwórcy
+- [@a11delavar](https://github.com/a11delavar)
 - [@jkngale](https://github.com/jkngale): podstawy integracji z Todoist
+- [@d8monx](https://github.com/d8monx): linki do dokumentacji każdej integracji w oknie, które ją łączy
+- [@libnewton](https://github.com/libnewton): wpisy CalDAV bez rozszerzenia .ics

@@ -56,7 +56,7 @@ Lo stato di oggi sta alla fine della riga di una routine: la casella di un’att
 
 ## Il dettaglio di una routine
 
-Fai clic su una riga per vedere di più: da quando esiste la routine, le sue ultime settimane come griglia di giorni e, sotto, tre riquadri: la sua serie, intitolata a come procede, ad esempio **In carreggiata** o **In calo**, con il tuo record; quanto dell’ultimo anno hai rispettato; e il giorno della settimana in cui cede più spesso. Il suo menu **⋯** offre **Fatto oggi** per un’attività, **Annullato** per annullare l’occorrenza di oggi e **Mostra nel calendario** per aprire la successiva. Togli lì la spunta da **Segui come va** per una routine che rispetti senza coltivarla, come una bolletta o una riunione: non mostra più una serie, e il suo dettaglio solo la griglia.
+Fai clic su una riga per vedere di più: da quando esiste la routine, le sue ultime settimane come griglia di giorni e, sotto, tre riquadri: la sua serie, intitolata a come procede, ad esempio **In carreggiata** o **In calo**, **Niente in programma** quando non è prevista nessuna data, o **Interrotta** quando è passata in **Passate**, con il tuo record; quanto dell’ultimo anno hai rispettato; e il giorno della settimana in cui cede più spesso. Il suo menu **⋯** offre **Fatto oggi** per un’attività, **Annullato** per annullare l’occorrenza di oggi e **Mostra nel calendario** per aprire la successiva. Togli lì la spunta da **Segui come va** per una routine che rispetti senza coltivarla, come una bolletta o una riunione: non mostra più una serie, e il suo dettaglio solo la griglia.
 
 ## Correggere una routine
 

@@ -4,7 +4,7 @@ title: Routines & reeksen, Todoist, afspraakstatus en vervaldatums in één oogo
 Mitra 0.8 helpt je vol te houden wat je steeds weer doet, en houdt bij wat niet is doorgegaan.
 
 ## Routines & reeksen
-Mitra bundelt de dingen die je vaak doet al tot routines, zoals de sportschool of elke vijf weken naar de kapper. Nu krijgen ze een eigen plek, waar een vlam in één oogopslag de reeks van elke routine toont, en haar detail de keren die je hebt gedaan, geannuleerd of gemist. Je kunt een routine een andere naam geven, twee routines die bij elkaar horen samenvoegen, of Mitra laten weten dat iets helemaal geen routine is. Routines blijven in de maand- en jaarweergave ook rustig staan, hoe ver je ook scrolt, en je AI-connector kan je vertellen hoe het ermee gaat.
+Mitra bundelt de dingen die je vaak doet al tot routines, zoals de sportschool of elke vijf weken naar de kapper. Nu krijgen ze een eigen plek, waar een vlam in één oogopslag de reeks van elke routine toont, en haar detail de keren die je hebt gedaan, geannuleerd of gemist. Je kunt een routine een andere naam geven, twee routines die bij elkaar horen samenvoegen, of Mitra laten weten dat iets helemaal geen routine is. Routines blijven in de maand- en jaarweergave ook rustig staan, hoe ver je ook scrolt, en je AI-connector kan je vertellen hoe het ermee gaat. Het tabblad toont eerst de routines van **Vandaag**, dan de **Lopend**e, en klapt de routines van lang geleden weg onder **Verleden**. Wil je de routines van een agenda weglaten, zoals die van je werkagenda, kies dan **Routines verbergen** in het menu ervan.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
@@ -45,6 +45,11 @@ Documentatie: [Een vervaldatum instellen](../../docs/planning.md#set-a-due-date)
 
 ## Personalisatie
 Geef elke agenda een van twee nieuwe kleuren, of een kleur naar keuze. Hernoem de kop van een account met een dubbelklik en verberg al zijn agenda's in één keer.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="personalization-dark.webp">
+	<img src="personalization-light.webp" alt="Het menu van een agenda open in de zijbalk, met de kleuren naast de agenda's die ze kleuren">
+</picture>
 
 ## Eigen CSS
 Het uiterlijk van Mitra is gewone CSS, en nu kun je je eigen CSS eroverheen leggen. Open **Instellingen → Algemeen → Eigen CSS** en typ een regel: Mitra past die toe terwijl je typt en bewaart hem in je account, zodat hij je naar elk apparaat volgt. Geef Mitra je favoriete kleur, maak alle hoeken vierkant of verberg wat je nooit gebruikt. Waar mensen inloggen, vindt wie de server beheert onder **Beheer** ook **Eigen CSS voor iedereen**, om de hele server een eigen uiterlijk te geven.
@@ -87,4 +92,7 @@ Mitra leert Arabisch, Russisch, Pools en Nederlands. Met elke versie is Mitra be
 </picture>
 
 ## Bijdragers
+- [@a11delavar](https://github.com/a11delavar)
 - [@jkngale](https://github.com/jkngale): de basis voor Todoist
+- [@d8monx](https://github.com/d8monx): links naar de documentatie van elke integratie in het venster dat haar koppelt
+- [@libnewton](https://github.com/libnewton): CalDAV-items zonder .ics-extensie

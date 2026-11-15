@@ -56,7 +56,7 @@ Today's status sits at the end of a routine's row: a task's checkbox, which tick
 
 ## A routine's detail
 
-Click a row to see more: since when the routine runs, its recent weeks as a grid of days, and three tiles under it: its streak, headed by how it goes, such as **On track** or **Slipping**, with your best; how much of the past year you kept; and the weekday it slips on most. Its **⋯** menu has **Done today** for a task, **Cancelled** for today's occurrence, and **Show in calendar** to open the next one. Uncheck **Track how it goes** there for a routine you keep to rather than keep up, such as a bill or a meeting: it then shows no streak, and its detail only its grid.
+Click a row to see more: since when the routine runs, its recent weeks as a grid of days, and three tiles under it: its streak, headed by how it goes, such as **On track** or **Slipping**, **Nothing ahead** once no date is planned, or **Ended** once it moved to Past, with your best; how much of the past year you kept; and the weekday it slips on most. Its **⋯** menu has **Done today** for a task, **Cancelled** for today's occurrence, and **Show in calendar** to open the next one. Uncheck **Track how it goes** there for a routine you keep to rather than keep up, such as a bill or a meeting: it then shows no streak, and its detail only its grid.
 
 ## Correct a routine
 

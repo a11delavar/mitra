@@ -4,7 +4,7 @@ title: Routinen & Serien, Todoist, Terminstatus und Fälligkeiten auf einen Blic
 Mitra 0.8 hilft dir, bei den Dingen dranzubleiben, die du immer wieder tust, und hält fest, was nicht stattgefunden hat.
 
 ## Routinen & Serien
-Mitra fasst schon jetzt zu Routinen zusammen, was du oft tust, etwa das Fitnessstudio oder einen Haarschnitt alle fünf Wochen. Jetzt bekommen sie einen eigenen Platz, an dem eine Flamme die Serie jeder Routine auf einen Blick zeigt und ihre Details die Tage, die du eingehalten, abgesagt oder verpasst hast. Du kannst eine Routine umbenennen, zwei zusammengehörige zusammenführen oder Mitra sagen, dass etwas gar keine Routine ist. Routinen bleiben außerdem in der Monats- und Jahresansicht stabil, egal wie weit du scrollst, und dein KI-Konnektor kann dir sagen, wie es um sie steht.
+Mitra fasst schon jetzt zu Routinen zusammen, was du oft tust, etwa das Fitnessstudio oder einen Haarschnitt alle fünf Wochen. Jetzt bekommen sie einen eigenen Platz, an dem eine Flamme die Serie jeder Routine auf einen Blick zeigt und ihre Details die Tage, die du eingehalten, abgesagt oder verpasst hast. Du kannst eine Routine umbenennen, zwei zusammengehörige zusammenführen oder Mitra sagen, dass etwas gar keine Routine ist. Routinen bleiben außerdem in der Monats- und Jahresansicht stabil, egal wie weit du scrollst, und dein KI-Konnektor kann dir sagen, wie es um sie steht. Der Tab zeigt zuerst die Routinen von **Heute**, dann die **Laufend**en, und klappt die, die lange zurückliegen, unter **Vergangen** weg. Um die Routinen eines Kalenders auszulassen, etwa die deines Arbeitskalenders, wähle in seinem Menü **Routinen ausblenden**.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
@@ -45,6 +45,11 @@ Doku: [Ein Fälligkeitsdatum setzen](../../docs/planning.md#set-a-due-date)
 
 ## Personalisierung
 Gib jedem Kalender eine von zwei weiteren Farben oder eine ganz eigene. Benenne die Überschrift eines Kontos per Doppelklick um und blende alle seine Kalender auf einmal aus.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="personalization-dark.webp">
+	<img src="personalization-light.webp" alt="Das Menü eines Kalenders in der Seitenleiste, seine Farben neben den Kalendern, die sie einfärben">
+</picture>
 
 ## Eigenes CSS
 Mitras Aussehen ist schlichtes CSS, und jetzt kannst du dein eigenes darüberlegen. Öffne **Einstellungen → Allgemein → Eigenes CSS** und tippe eine Regel: Mitra wendet sie beim Tippen an und speichert sie in deinem Konto, sodass sie dir auf jedes Gerät folgt. Gib Mitra deine Lieblingsfarbe, mach alle Ecken eckig oder blende aus, was du nie brauchst. Wo man sich anmeldet, findet, wer den Server verwaltet, unter **Verwaltung** außerdem **Eigenes CSS für alle**, um dem ganzen Server sein Aussehen zu geben.
@@ -87,4 +92,7 @@ Mitra lernt Arabisch, Russisch, Polnisch und Niederländisch. Mit jeder Version 
 </picture>
 
 ## Mitwirkende
+- [@a11delavar](https://github.com/a11delavar)
 - [@jkngale](https://github.com/jkngale): die Vorarbeit für Todoist
+- [@d8monx](https://github.com/d8monx): Links zur Dokumentation jeder Integration im Dialog, der sie verbindet
+- [@libnewton](https://github.com/libnewton): CalDAV-Einträge ohne .ics-Endung

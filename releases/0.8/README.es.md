@@ -4,7 +4,7 @@ title: Rutinas y rachas, Todoist, estado de eventos y vencimientos de un vistazo
 Mitra 0.8 te ayuda a mantener las cosas que haces una y otra vez, y guarda constancia de lo que no llegó a pasar.
 
 ## Rutinas y rachas
-Mitra ya agrupa en rutinas lo que haces a menudo, como ir al gimnasio o cortarte el pelo cada cinco semanas. Ahora tienen un lugar propio, donde una llama muestra de un vistazo la racha de cada rutina, y su detalle los días que cumpliste, cancelaste o te saltaste. Puedes cambiar el nombre de una rutina, unir dos que van juntas o decirle a Mitra que algo no es una rutina. Las rutinas también se mantienen estables en las vistas de mes y año por mucho que te desplaces, y tu conector de IA puede decirte cómo van.
+Mitra ya agrupa en rutinas lo que haces a menudo, como ir al gimnasio o cortarte el pelo cada cinco semanas. Ahora tienen un lugar propio, donde una llama muestra de un vistazo la racha de cada rutina, y su detalle los días que cumpliste, cancelaste o te saltaste. Puedes cambiar el nombre de una rutina, unir dos que van juntas o decirle a Mitra que algo no es una rutina. Las rutinas también se mantienen estables en las vistas de mes y año por mucho que te desplaces, y tu conector de IA puede decirte cómo van. La pestaña muestra primero las rutinas de **Hoy**, luego las que están **En curso**, y pliega bajo **Pasadas** las que quedaron muy atrás. Para dejar fuera las rutinas de un calendario, como las de tu calendario del trabajo, elige **Ocultar sus rutinas** en su menú.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
@@ -45,6 +45,11 @@ Docs: [Fijar una fecha de vencimiento](../../docs/planning.md#set-a-due-date)
 
 ## Personalización
 Da a cada calendario uno de dos colores más, o el color que quieras. Cambia el nombre del encabezado de una cuenta con un doble clic y oculta todos sus calendarios a la vez.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="personalization-dark.webp">
+	<img src="personalization-light.webp" alt="El menú de un calendario abierto en la barra lateral, con sus colores junto a los calendarios que pintan">
+</picture>
 
 ## CSS personalizado
 El aspecto de Mitra es CSS normal, y ahora puedes añadir el tuyo encima. Abre **Ajustes → General → CSS personalizado** y escribe una regla: Mitra la aplica mientras escribes y la guarda en tu cuenta, así que te sigue a todos tus dispositivos. Dale a Mitra tu color favorito, cuadra todas las esquinas u oculta lo que nunca usas. Donde se inicia sesión, quien administra el servidor encuentra además **CSS personalizado para todos** en **Administración**, para darle su aspecto a todo el servidor.
@@ -87,4 +92,7 @@ Mitra está aprendiendo árabe, ruso, polaco y neerlandés. Con cada versión, M
 </picture>
 
 ## Colaboradores
+- [@a11delavar](https://github.com/a11delavar)
 - [@jkngale](https://github.com/jkngale): las bases para Todoist
+- [@d8monx](https://github.com/d8monx): enlaces a la documentación de cada integración en el diálogo que la conecta
+- [@libnewton](https://github.com/libnewton): entradas de CalDAV sin extensión .ics

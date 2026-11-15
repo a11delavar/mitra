@@ -56,7 +56,7 @@ Der heutige Status steht am Ende der Zeile einer Routine: bei einer Aufgabe ihr 
 
 ## Die Details einer Routine
 
-Klick auf eine Zeile, um mehr zu sehen: seit wann die Routine läuft, ihre letzten Wochen als Raster von Tagen und darunter drei Kacheln: ihre Serie, überschrieben mit einem Wort, wie es läuft, etwa **Auf Kurs** oder **Lässt nach**, mit deinem Bestwert; wie viel des vergangenen Jahres du eingehalten hast; und an welchem Wochentag sie am ehesten ausfällt. Ihr Menü **⋯** bietet **Heute erledigt** für eine Aufgabe, **Abgebrochen**, um die heutige Wiederholung abzusagen, und **Im Kalender zeigen**, um die nächste zu öffnen. Entferne dort den Haken bei **Verlauf verfolgen** für eine Routine, die du nur einhältst, statt sie zu pflegen, etwa eine Rechnung oder ein Meeting: Sie zeigt dann keine Serie und in ihren Details nur das Raster.
+Klick auf eine Zeile, um mehr zu sehen: seit wann die Routine läuft, ihre letzten Wochen als Raster von Tagen und darunter drei Kacheln: ihre Serie, überschrieben mit einem Wort, wie es läuft, etwa **Auf Kurs** oder **Lässt nach**, **Nichts geplant**, sobald kein Termin mehr geplant ist, oder **Beendet**, sobald sie unter **Vergangen** gewandert ist, mit deinem Bestwert; wie viel des vergangenen Jahres du eingehalten hast; und an welchem Wochentag sie am ehesten ausfällt. Ihr Menü **⋯** bietet **Heute erledigt** für eine Aufgabe, **Abgebrochen**, um die heutige Wiederholung abzusagen, und **Im Kalender zeigen**, um die nächste zu öffnen. Entferne dort den Haken bei **Verlauf verfolgen** für eine Routine, die du nur einhältst, statt sie zu pflegen, etwa eine Rechnung oder ein Meeting: Sie zeigt dann keine Serie und in ihren Details nur das Raster.
 
 ## Eine Routine korrigieren
 

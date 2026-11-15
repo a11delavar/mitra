@@ -4,7 +4,7 @@ title: Routines et séries, Todoist, statut des événements et échéances en u
 Mitra 0.8 vous aide à tenir les choses que vous faites encore et encore, et garde une trace de ce qui n'a pas eu lieu.
 
 ## Routines et séries
-Mitra regroupe déjà en routines ce que vous faites souvent, comme la salle de sport ou une coupe de cheveux toutes les cinq semaines. Elles ont désormais une place à elles, où une flamme montre d'un coup d'œil la série de chaque routine, et son détail les jours tenus, annulés ou manqués. Vous pouvez renommer une routine, fusionner deux routines qui vont ensemble, ou indiquer à Mitra que quelque chose n'est pas une routine. Les routines restent aussi stables dans les vues mois et année, aussi loin que vous fassiez défiler, et votre connecteur IA peut vous dire où elles en sont.
+Mitra regroupe déjà en routines ce que vous faites souvent, comme la salle de sport ou une coupe de cheveux toutes les cinq semaines. Elles ont désormais une place à elles, où une flamme montre d'un coup d'œil la série de chaque routine, et son détail les jours tenus, annulés ou manqués. Vous pouvez renommer une routine, fusionner deux routines qui vont ensemble, ou indiquer à Mitra que quelque chose n'est pas une routine. Les routines restent aussi stables dans les vues mois et année, aussi loin que vous fassiez défiler, et votre connecteur IA peut vous dire où elles en sont. L’onglet montre d’abord les routines d’**Aujourd’hui**, puis celles **En cours**, et replie sous **Passées** celles qui remontent à longtemps. Pour écarter les routines d’un calendrier, comme celles de ton calendrier de travail, choisis **Masquer ses routines** dans son menu.
 
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="routines-dark.webp">
@@ -45,6 +45,11 @@ Documentation : [Fixer une échéance](../../docs/planning.md#set-a-due-date)
 
 ## Personnalisation
 Donnez à chaque calendrier l'une de deux nouvelles couleurs, ou la couleur de votre choix. Renommez l'en-tête d'un compte d'un double-clic et masquez tous ses calendriers d'un coup.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="personalization-dark.webp">
+	<img src="personalization-light.webp" alt="Le menu d'un calendrier ouvert dans la barre latérale, ses couleurs à côté des calendriers qu'elles colorent">
+</picture>
 
 ## CSS personnalisé
 L'apparence de Mitra est du CSS ordinaire, et vous pouvez maintenant ajouter le vôtre par-dessus. Ouvrez **Paramètres → Général → CSS personnalisé** et saisissez une règle : Mitra l'applique pendant que vous tapez et la garde dans votre compte, si bien qu'elle vous suit sur tous vos appareils. Donnez à Mitra votre couleur préférée, rendez tous les angles carrés ou masquez ce que vous n'utilisez jamais. Là où l'on se connecte, un administrateur trouve aussi **CSS personnalisé pour tous** sous **Administration**, pour donner son apparence à tout le serveur.
@@ -87,4 +92,7 @@ Mitra apprend l'arabe, le russe, le polonais et le néerlandais. À chaque versi
 </picture>
 
 ## Contributeurs
+- [@a11delavar](https://github.com/a11delavar)
 - [@jkngale](https://github.com/jkngale) : les bases pour Todoist
+- [@d8monx](https://github.com/d8monx) : des liens vers la documentation de chaque intégration dans la boîte de dialogue qui la connecte
+- [@libnewton](https://github.com/libnewton) : les entrées CalDAV sans extension .ics

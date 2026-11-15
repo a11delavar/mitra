@@ -35,7 +35,7 @@ Hoe vaak een routine voorkomt, bepaalt hoe de weergaven haar tonen:
 
 ## Het tabblad Routines
 
-Open **Routines** in de zijbalk, naast Agenda's en Planning, of typ de naam in het opdrachtenpalet. **Vandaag** toont de routines van vandaag, op volgorde van hun tijd, en **Lopend** de rest, op hun volgende datum. Routines die de laatste drie maanden nergens voorkwamen en niets meer voor zich hebben, klappen weg onder **Voorbij**, de laatste eerst. Om de routines van een agenda weg te laten, zoals die van je werkagenda, kies je **Routines verbergen** in het menu ervan in de zijbalk. Elke rij toont de naam van de routine, wanneer ze voorkomt, en haar reeks: een vlam in de kleur van haar agenda met hoeveel herhalingen je op rij hebt gedaan. Een gemiste of geannuleerde beëindigt de reeks, en de vlam wordt grijs.
+Open **Routines** in de zijbalk, naast Agenda's en Planning, of typ de naam in het opdrachtenpalet. **Vandaag** toont de routines van vandaag, op volgorde van hun tijd, en **Lopend** de rest, op hun volgende datum. Routines die de laatste drie maanden nergens voorkwamen en niets meer voor zich hebben, klappen weg onder **Verleden**, de laatste eerst. Om de routines van een agenda weg te laten, zoals die van je werkagenda, kies je **Routines verbergen** in het menu ervan in de zijbalk. Elke rij toont de naam van de routine, wanneer ze voorkomt, en haar reeks: een vlam in de kleur van haar agenda met hoeveel herhalingen je op rij hebt gedaan. Een gemiste of geannuleerde beëindigt de reeks, en de vlam wordt grijs.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/routines-detail-dark.webp">
@@ -56,7 +56,7 @@ De status van vandaag staat aan het eind van de rij van een routine: het selecti
 
 ## De details van een routine
 
-Klik op een rij voor meer: sinds wanneer de routine loopt, haar laatste weken als raster van dagen en daaronder drie tegels: haar reeks, met als kop hoe het gaat, zoals **Op koers** of **Zakt weg**, en je record; hoeveel van het afgelopen jaar je hebt gedaan; en op welke weekdag ze het vaakst erbij inschiet. Het menu **⋯** heeft **Vandaag gedaan** voor een taak, **Geannuleerd** om de herhaling van vandaag te annuleren, en **In agenda tonen** om de volgende te openen. Vink daar **Bijhouden hoe het gaat** uit voor een routine die je alleen nakomt, zoals een rekening of een vergadering: ze toont dan geen reeks, en haar detail alleen het raster.
+Klik op een rij voor meer: sinds wanneer de routine loopt, haar laatste weken als raster van dagen en daaronder drie tegels: haar reeks, met als kop hoe het gaat, zoals **Op koers** of **Zakt weg**, **Niets gepland** zodra er geen datum meer gepland is, of **Voorbij** zodra ze naar **Verleden** is verhuisd, en je record; hoeveel van het afgelopen jaar je hebt gedaan; en op welke weekdag ze het vaakst erbij inschiet. Het menu **⋯** heeft **Vandaag gedaan** voor een taak, **Geannuleerd** om de herhaling van vandaag te annuleren, en **In agenda tonen** om de volgende te openen. Vink daar **Bijhouden hoe het gaat** uit voor een routine die je alleen nakomt, zoals een rekening of een vergadering: ze toont dan geen reeks, en haar detail alleen het raster.
 
 ## Een routine corrigeren
 

@@ -56,7 +56,7 @@ El estado de hoy está al final de la fila de una rutina: la casilla de una tare
 
 ## El detalle de una rutina
 
-Haz clic en una fila para ver más: desde cuándo existe la rutina, sus últimas semanas como una cuadrícula de días y, debajo, tres recuadros: su racha, encabezada por cómo va, como **En marcha** o **Flaqueando**, con tu mejor racha; cuánto del último año cumpliste; y el día de la semana en que más falla. Su menú **⋯** ofrece **Hecho hoy** para una tarea, **Cancelado** para cancelar la repetición de hoy y **Mostrar en el calendario** para abrir la siguiente. Desmarca allí **Seguir cómo va** para una rutina que solo cumples, como una factura o una reunión: entonces no muestra racha, y su detalle solo la cuadrícula.
+Haz clic en una fila para ver más: desde cuándo existe la rutina, sus últimas semanas como una cuadrícula de días y, debajo, tres recuadros: su racha, encabezada por cómo va, como **En marcha** o **Flaqueando**, **Nada por delante** cuando no hay ninguna fecha prevista o **Terminada** cuando pasó a **Pasadas**, con tu mejor racha; cuánto del último año cumpliste; y el día de la semana en que más falla. Su menú **⋯** ofrece **Hecho hoy** para una tarea, **Cancelado** para cancelar la repetición de hoy y **Mostrar en el calendario** para abrir la siguiente. Desmarca allí **Seguir cómo va** para una rutina que solo cumples, como una factura o una reunión: entonces no muestra racha, y su detalle solo la cuadrícula.
 
 ## Corregir una rutina
 
