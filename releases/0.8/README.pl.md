@@ -1,7 +1,7 @@
 ---
 title: Rutyny i serie, Todoist, status wydarzeń i terminy na pierwszy rzut oka
 ---
-Mitra 0.8 pomaga ci wytrwać w tym, co robisz regularnie, i zapisuje, co się nie odbyło.
+Mitra 0.8 daje twoim rutynom własne miejsce, w którym widzisz, jak idzie każda z nich, i podtrzymujesz jej serię. Mitra łączy się też z Todoist, pokazuje, kiedy mija termin zadania i czy wydarzenie jest nadal aktualne, a do tego jest dostępna w czterech kolejnych językach, z wieloma mniejszymi ulepszeniami i poprawkami.
 
 ## Rutyny i serie
 Mitra już wcześniej zbierała w rutyny to, co robisz często, na przykład siłownię albo strzyżenie co pięć tygodni. Teraz rutyny mają własne miejsce, w którym płomień na pierwszy rzut oka pokazuje serię każdej z nich, a jej szczegóły dni wykonane, anulowane lub pominięte. Możesz zmienić nazwę rutyny, połączyć dwie, które do siebie należą, albo zaznaczyć, że coś wcale nie jest rutyną. W widokach miesiąca i roku rutyny wyglądają tak samo bez względu na to, jak daleko przewiniesz, a twój konektor AI potrafi podsumować, jak ci idą. Karta pokazuje najpierw rutyny na **Dzisiaj**, potem **Trwające**, a te sprzed dawna zwija pod **Minione**. Aby pominąć rutyny jakiegoś kalendarza, na przykład kalendarza pracy, wybierz w jego menu **Ukryj jego rutyny**.
@@ -93,6 +93,6 @@ Mitra uczy się arabskiego, rosyjskiego, polskiego i niderlandzkiego. Każde kol
 
 ## Współtwórcy
 - [@a11delavar](https://github.com/a11delavar)
-- [@jkngale](https://github.com/jkngale): podstawy integracji z Todoist
-- [@d8monx](https://github.com/d8monx): linki do dokumentacji każdej integracji w oknie, które ją łączy
-- [@libnewton](https://github.com/libnewton): wpisy CalDAV bez rozszerzenia .ics
+- [@jkngale](https://github.com/jkngale)
+- [@d8monx](https://github.com/d8monx)
+- [@libnewton](https://github.com/libnewton)

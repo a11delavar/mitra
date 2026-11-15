@@ -1,5 +1,5 @@
 ---
-title: Lepsze podzadania, własne grupowanie kalendarzy i zaawansowany kreator ustawień regionalnych
+title: Lepsze podzadania, TickTick, własne grupowanie kalendarzy i zaawansowany kreator ustawień regionalnych
 ---
 Mitra 0.9 jest wciąż planowana. Łączy większe przedsięwzięcia i pokazuje, co można zrobić dalej, pozwala pasku bocznemu podążać za twoim sposobem myślenia i zapisuje daty tak, jak je czytasz.
 
@@ -17,6 +17,9 @@ Planowanie wymienia w osobnej sekcji otwarte zadania, których nie blokuje żadn
 
 ## Ostrzeżenie przy zablokowanych zadaniach
 Ukończenie zadania, które wciąż blokuje inne otwarte zadanie, najpierw wymaga potwierdzenia, więc kończenie poza kolejnością jest wyborem, a nie przypadkiem.
+
+## Integracja z TickTick
+Połącz swoje konto TickTick, a jego listy trafią do Mitry jako kalendarze zadań, synchronizowane w obie strony.
 
 ## Powiadomienia tam, gdzie jesteś
 Przypomnienia docierają do narzędzi, których już używasz, takich jak ntfy, Apprise czy twój własny webhook.

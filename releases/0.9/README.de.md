@@ -1,5 +1,5 @@
 ---
-title: Bessere Teilaufgaben, eigene Kalendergruppen und ein erweiterter Gebietsschema-Baukasten
+title: Bessere Teilaufgaben, TickTick, eigene Kalendergruppen und ein erweiterter Gebietsschema-Baukasten
 ---
 Mitra 0.9 ist noch in Planung. Es bringt größere Vorhaben zusammen und zeigt, was sich als Nächstes erledigen lässt, lässt die Seitenleiste deiner Denkweise folgen und schreibt Daten so, wie du sie liest.
 
@@ -17,6 +17,9 @@ Die Planung führt die offenen Aufgaben, die keine andere offene Aufgabe blockie
 
 ## Warnung bei blockierten Aufgaben
 Wenn du eine Aufgabe erledigst, die eine andere offene Aufgabe noch blockiert, wird zuerst nachgefragt, sodass ein Abschluss außer der Reihe eine Entscheidung ist und kein Versehen.
+
+## TickTick-Integration
+Verbinde dein TickTick-Konto, und seine Listen kommen als Aufgabenkalender in Mitra, in beide Richtungen synchron gehalten.
 
 ## Benachrichtigungen dort, wo du bist
 Erinnerungen erreichen die Werkzeuge, die du schon nutzt, etwa ntfy, Apprise oder deinen eigenen Webhook.

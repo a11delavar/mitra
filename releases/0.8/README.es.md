@@ -1,7 +1,7 @@
 ---
 title: Rutinas y rachas, Todoist, estado de eventos y vencimientos de un vistazo
 ---
-Mitra 0.8 te ayuda a mantener las cosas que haces una y otra vez, y guarda constancia de lo que no llegó a pasar.
+Mitra 0.8 da a tus rutinas un lugar propio, donde ves cómo va cada una y mantienes viva su racha. Mitra también se conecta con Todoist, muestra cuándo vence una tarea y si un evento sigue en pie, y llega en cuatro idiomas más, con muchas mejoras y correcciones más pequeñas.
 
 ## Rutinas y rachas
 Mitra ya agrupa en rutinas lo que haces a menudo, como ir al gimnasio o cortarte el pelo cada cinco semanas. Ahora tienen un lugar propio, donde una llama muestra de un vistazo la racha de cada rutina, y su detalle los días que cumpliste, cancelaste o te saltaste. Puedes cambiar el nombre de una rutina, unir dos que van juntas o decirle a Mitra que algo no es una rutina. Las rutinas también se mantienen estables en las vistas de mes y año por mucho que te desplaces, y tu conector de IA puede decirte cómo van. La pestaña muestra primero las rutinas de **Hoy**, luego las que están **En curso**, y pliega bajo **Pasadas** las que quedaron muy atrás. Para dejar fuera las rutinas de un calendario, como las de tu calendario del trabajo, elige **Ocultar sus rutinas** en su menú.
@@ -93,6 +93,6 @@ Mitra está aprendiendo árabe, ruso, polaco y neerlandés. Con cada versión, M
 
 ## Colaboradores
 - [@a11delavar](https://github.com/a11delavar)
-- [@jkngale](https://github.com/jkngale): las bases para Todoist
-- [@d8monx](https://github.com/d8monx): enlaces a la documentación de cada integración en el diálogo que la conecta
-- [@libnewton](https://github.com/libnewton): entradas de CalDAV sin extensión .ics
+- [@jkngale](https://github.com/jkngale)
+- [@d8monx](https://github.com/d8monx)
+- [@libnewton](https://github.com/libnewton)

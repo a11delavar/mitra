@@ -1,7 +1,7 @@
 ---
 title: 例行事项与连续记录、Todoist、日程状态与截止日期一目了然
 ---
-Mitra 0.8 帮你坚持那些反复要做的事，并记下没有发生的事。
+Mitra 0.8 为你的例行事项安排了专属的位置，你可以在这里看到每项例行事项的进展，并保持它的连续记录。Mitra 还能连接 Todoist，显示任务何时到期、日程是否照常进行，并新增四种语言，另有许多较小的改进和修复。
 
 ## 例行事项与连续记录
 Mitra 已经会把你经常做的事归为例行事项，比如去健身房，或者每五周理一次发。现在它们有了自己的位置，一团火焰让你一眼看到每个例行事项的连续记录，详情里则是你完成、取消或错过的日子。你可以给例行事项改名，把属于一起的两个合并，或者告诉 Mitra 某件事根本不是例行事项。无论你滚动多远，例行事项在月视图和年视图中都保持稳定，你的 AI 连接器也能告诉你它们的进展。 该标签页先列出 **今天** 的例行事项，再列出 **进行中** 的，很久以前的则收进 **过去**。要隐藏某个日历的例行事项（例如工作日历的），在它的菜单中选择 **隐藏其例行事项**。
@@ -93,6 +93,6 @@ Mitra 正在学习阿拉伯语、俄语、波兰语和荷兰语。每个版本�
 
 ## 贡献者
 - [@a11delavar](https://github.com/a11delavar)
-- [@jkngale](https://github.com/jkngale)：Todoist 集成的基础工作
-- [@d8monx](https://github.com/d8monx)：在连接每个集成的对话框中链接其文档
-- [@libnewton](https://github.com/libnewton)：没有 .ics 扩展名的 CalDAV 条目
+- [@jkngale](https://github.com/jkngale)
+- [@d8monx](https://github.com/d8monx)
+- [@libnewton](https://github.com/libnewton)

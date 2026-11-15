@@ -1,5 +1,5 @@
 ---
-title: Mejores subtareas, agrupación propia de calendarios y un configurador avanzado de configuración regional
+title: Mejores subtareas, TickTick, agrupación propia de calendarios y un configurador avanzado de configuración regional
 ---
 Mitra 0.9 todavía se está planificando. Reúne los trabajos más grandes y muestra qué se puede hacer a continuación, deja que la barra lateral siga tu forma de pensar y escribe las fechas como tú las lees.
 
@@ -17,6 +17,9 @@ Planificación reúne en una sección propia las tareas abiertas que ninguna otr
 
 ## Aviso en tareas bloqueadas
 Completar una tarea que otra tarea abierta todavía bloquea pide confirmación primero, así terminar fuera de orden es una decisión y no un accidente.
+
+## Integración con TickTick
+Conecta tu cuenta de TickTick y sus listas llegan a Mitra como calendarios de tareas, sincronizados en ambos sentidos.
 
 ## Notificaciones donde estés
 Los recordatorios llegan a las herramientas que ya usas, como ntfy, Apprise o tu propio webhook.

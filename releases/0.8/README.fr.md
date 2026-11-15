@@ -1,7 +1,7 @@
 ---
 title: Routines et séries, Todoist, statut des événements et échéances en un coup d'œil
 ---
-Mitra 0.8 vous aide à tenir les choses que vous faites encore et encore, et garde une trace de ce qui n'a pas eu lieu.
+Mitra 0.8 donne à vos routines une place à elles, où vous voyez où en est chacune et entretenez sa série. Mitra se connecte aussi à Todoist, montre quand une tâche arrive à échéance et si un événement est toujours maintenu, et arrive dans quatre langues de plus, avec de nombreuses améliorations et corrections plus modestes.
 
 ## Routines et séries
 Mitra regroupe déjà en routines ce que vous faites souvent, comme la salle de sport ou une coupe de cheveux toutes les cinq semaines. Elles ont désormais une place à elles, où une flamme montre d'un coup d'œil la série de chaque routine, et son détail les jours tenus, annulés ou manqués. Vous pouvez renommer une routine, fusionner deux routines qui vont ensemble, ou indiquer à Mitra que quelque chose n'est pas une routine. Les routines restent aussi stables dans les vues mois et année, aussi loin que vous fassiez défiler, et votre connecteur IA peut vous dire où elles en sont. L’onglet montre d’abord les routines d’**Aujourd’hui**, puis celles **En cours**, et replie sous **Passées** celles qui remontent à longtemps. Pour écarter les routines d’un calendrier, comme celles de ton calendrier de travail, choisis **Masquer ses routines** dans son menu.
@@ -93,6 +93,6 @@ Mitra apprend l'arabe, le russe, le polonais et le néerlandais. À chaque versi
 
 ## Contributeurs
 - [@a11delavar](https://github.com/a11delavar)
-- [@jkngale](https://github.com/jkngale) : les bases pour Todoist
-- [@d8monx](https://github.com/d8monx) : des liens vers la documentation de chaque intégration dans la boîte de dialogue qui la connecte
-- [@libnewton](https://github.com/libnewton) : les entrées CalDAV sans extension .ics
+- [@jkngale](https://github.com/jkngale)
+- [@d8monx](https://github.com/d8monx)
+- [@libnewton](https://github.com/libnewton)

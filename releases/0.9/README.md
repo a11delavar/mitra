@@ -1,5 +1,5 @@
 ---
-title: Better subtasks, custom calendar grouping and an advanced locale builder
+title: Better subtasks, TickTick, custom calendar grouping and an advanced locale builder
 ---
 Mitra 0.9 is still being planned. It brings bigger pieces of work together and shows what can be done next, lets the sidebar follow the way you think, and writes dates the way you read them.
 
@@ -17,6 +17,9 @@ Planning lists the open tasks no other open task blocks in a section of their ow
 
 ## Warning on blocked tasks
 Completing a task that another open task still blocks asks first, so finishing out of order is a choice and not an accident.
+
+## TickTick integration
+Connect your TickTick account, and its lists come into Mitra as task calendars, kept in sync both ways.
 
 ## Notifications where you are
 Reminders reach the tools you already use, such as ntfy, Apprise or your own webhook.

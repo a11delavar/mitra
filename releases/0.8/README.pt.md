@@ -1,7 +1,7 @@
 ---
 title: Rotinas e sequências, Todoist, estado dos eventos e vencimentos de relance
 ---
-O Mitra 0.8 ajuda você a manter as coisas que faz de novo e de novo, e guarda o registro do que não aconteceu.
+O Mitra 0.8 dá às suas rotinas um lugar próprio, onde você vê como cada uma está indo e mantém a sua sequência. O Mitra também se conecta ao Todoist, mostra quando uma tarefa vence e se um evento ainda está de pé, e chega em mais quatro idiomas, com muitas melhorias e correções menores.
 
 ## Rotinas e sequências
 O Mitra já reúne em rotinas o que você faz com frequência, como a academia ou um corte de cabelo a cada cinco semanas. Agora elas ganham um lugar próprio, onde uma chama mostra de relance a sequência de cada rotina, e o seu detalhe os dias que você cumpriu, cancelou ou perdeu. Você pode renomear uma rotina, juntar duas que andam juntas ou dizer ao Mitra que algo não é uma rotina. As rotinas também ficam estáveis nas visualizações de mês e ano, por mais que você role, e o seu conector de IA pode dizer como elas estão indo. A aba mostra primeiro as rotinas de **Hoje**, depois as que estão **Em curso**, e recolhe em **Passadas** as que ficaram muito para trás. Para deixar de fora as rotinas de um calendário, como as do calendário de trabalho, escolha **Ocultar as rotinas** no menu dele.
@@ -93,6 +93,6 @@ O Mitra está aprendendo árabe, russo, polonês e holandês. A cada versão, o 
 
 ## Colaboradores
 - [@a11delavar](https://github.com/a11delavar)
-- [@jkngale](https://github.com/jkngale): as bases para o Todoist
-- [@d8monx](https://github.com/d8monx): links para a documentação de cada integração na janela que a conecta
-- [@libnewton](https://github.com/libnewton): entradas CalDAV sem a extensão .ics
+- [@jkngale](https://github.com/jkngale)
+- [@d8monx](https://github.com/d8monx)
+- [@libnewton](https://github.com/libnewton)

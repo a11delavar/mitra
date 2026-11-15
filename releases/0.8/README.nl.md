@@ -1,7 +1,7 @@
 ---
 title: Routines & reeksen, Todoist, afspraakstatus en vervaldatums in één oogopslag
 ---
-Mitra 0.8 helpt je vol te houden wat je steeds weer doet, en houdt bij wat niet is doorgegaan.
+Mitra 0.8 geeft je routines een eigen plek, waar je ziet hoe het met elke routine gaat en haar reeks gaande houdt. Mitra koppelt ook met Todoist, laat zien wanneer een taak vervalt en of een afspraak nog doorgaat, en is er in vier talen meer, met veel kleinere verbeteringen en oplossingen.
 
 ## Routines & reeksen
 Mitra bundelt de dingen die je vaak doet al tot routines, zoals de sportschool of elke vijf weken naar de kapper. Nu krijgen ze een eigen plek, waar een vlam in één oogopslag de reeks van elke routine toont, en haar detail de keren die je hebt gedaan, geannuleerd of gemist. Je kunt een routine een andere naam geven, twee routines die bij elkaar horen samenvoegen, of Mitra laten weten dat iets helemaal geen routine is. Routines blijven in de maand- en jaarweergave ook rustig staan, hoe ver je ook scrolt, en je AI-connector kan je vertellen hoe het ermee gaat. Het tabblad toont eerst de routines van **Vandaag**, dan de **Lopend**e, en klapt de routines van lang geleden weg onder **Verleden**. Wil je de routines van een agenda weglaten, zoals die van je werkagenda, kies dan **Routines verbergen** in het menu ervan.
@@ -93,6 +93,6 @@ Mitra leert Arabisch, Russisch, Pools en Nederlands. Met elke versie is Mitra be
 
 ## Bijdragers
 - [@a11delavar](https://github.com/a11delavar)
-- [@jkngale](https://github.com/jkngale): de basis voor Todoist
-- [@d8monx](https://github.com/d8monx): links naar de documentatie van elke integratie in het venster dat haar koppelt
-- [@libnewton](https://github.com/libnewton): CalDAV-items zonder .ics-extensie
+- [@jkngale](https://github.com/jkngale)
+- [@d8monx](https://github.com/d8monx)
+- [@libnewton](https://github.com/libnewton)

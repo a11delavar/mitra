@@ -1,5 +1,5 @@
 ---
-title: Betere subtaken, eigen agendagroepen en een uitgebreide landinstellingenbouwer
+title: Betere subtaken, TickTick, eigen agendagroepen en een uitgebreide landinstellingenbouwer
 ---
 Mitra 0.9 wordt nog gepland. Het brengt grotere klussen samen en laat zien wat er nu kan, laat de zijbalk je eigen manier van denken volgen en schrijft datums zoals jij ze leest.
 
@@ -17,6 +17,9 @@ Planning zet de open taken die door geen andere open taak geblokkeerd worden in 
 
 ## Waarschuwing bij geblokkeerde taken
 Een taak afronden die een andere open taak nog blokkeert vraagt eerst om bevestiging, zodat buiten de volgorde afronden een keuze is en geen ongeluk.
+
+## TickTick-integratie
+Koppel je TickTick-account, en de lijsten ervan komen in Mitra als takenagenda's, in beide richtingen gesynchroniseerd.
 
 ## Meldingen waar jij bent
 Herinneringen bereiken de tools die je al gebruikt, zoals ntfy, Apprise of je eigen webhook.

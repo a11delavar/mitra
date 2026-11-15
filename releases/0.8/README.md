@@ -2,7 +2,7 @@
 title: Routines & streaks, Todoist, event status and due dates at a glance
 date: 2026-11-15
 ---
-Mitra 0.8 helps you keep up the things you do again and again, and keeps a record of what didn't happen.
+Mitra 0.8 gives your routines a home of their own, where you see how each one is going and keep up its streak. Mitra also connects to Todoist, shows when a task is due and whether an event is still on, and comes in four more languages, with many smaller improvements and fixes.
 
 ## Routines & streaks
 Mitra already gathers the things you do often, such as the gym or a haircut every five weeks, into routines. Now they get a place of their own, where a flame shows each routine's streak at a glance, and its detail the days you kept, cancelled or missed. You can rename a routine, merge two that belong together, or tell Mitra that something isn't a routine at all. Routines also stay steady in the month and year views however far you scroll, and your AI connector can tell you how they are going. The tab lists the routines that come **Today** first, then the **Ongoing** ones, and folds those that came long ago away under **Past**. To leave out a calendar's routines, such as your work calendar's, choose **Hide its routines** in its menu.
@@ -94,6 +94,6 @@ Mitra is learning Arabic, Russian, Polish and Dutch. Each release has made Mitra
 
 ## Contributors
 - [@a11delavar](https://github.com/a11delavar)
-- [@jkngale](https://github.com/jkngale): the groundwork for Todoist
-- [@d8monx](https://github.com/d8monx): links to each integration's docs in the dialog that connects it
-- [@libnewton](https://github.com/libnewton): CalDAV entries without an .ics extension
+- [@jkngale](https://github.com/jkngale)
+- [@d8monx](https://github.com/d8monx)
+- [@libnewton](https://github.com/libnewton)

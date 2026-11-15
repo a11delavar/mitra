@@ -1,5 +1,5 @@
 ---
-title: Attività secondarie migliori, raggruppamento personalizzato dei calendari e un configuratore avanzato delle impostazioni locali
+title: Attività secondarie migliori, TickTick, raggruppamento personalizzato dei calendari e un configuratore avanzato delle impostazioni locali
 ---
 Mitra 0.9 è ancora in fase di pianificazione. Riunisce i lavori più grandi e mostra cosa si può fare dopo, lascia che la barra laterale segua il tuo modo di pensare e scrive le date come le leggi tu.
 
@@ -17,6 +17,9 @@ Pianificazione elenca in una sezione a parte le attività aperte che nessun'altr
 
 ## Avviso sulle attività bloccate
 Completare un'attività che un'altra attività aperta blocca ancora chiede prima conferma, così finire fuori ordine è una scelta e non un incidente.
+
+## Integrazione con TickTick
+Collega il tuo account TickTick e le sue liste arrivano in Mitra come calendari di attività, sincronizzati in entrambe le direzioni.
 
 ## Notifiche dove sei
 I promemoria raggiungono gli strumenti che usi già, come ntfy, Apprise o il tuo webhook.
