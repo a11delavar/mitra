@@ -3,10 +3,10 @@ name: Cleanup GHCR
 # GHCR never garbage-collects, so two things pile up forever:
 #   • untagged manifests: multi-arch publishes leave child images, and a moved
 #     `dev` tag orphans its previous digest;
-#   • per-commit `sha-*` tags: one per push to main, and `pr-*` tags: one per pull request.
-# This prunes both. It starts in DRY-RUN: check the run summary, then set
-# `dry-run: false` once the selection looks right. `latest`, `dev` and release
-# tags (X.Y.Z / X.Y / X) are never matched.
+#   • per-commit `sha-*` tags: one per push to main.
+# This prunes both; a pull request's `pr-*` image goes when it closes (`cleanup-pr.yml`).
+# `latest`, `dev` and release tags (X.Y.Z / X.Y / X) are never matched, and
+# untagged children of a tagged multi-arch image are kept.
 # `account` is the literal `user` for a personal account: any other value is
 # taken as an organization name and queried through `/orgs/<name>/` (a 404).
 on:
@@ -21,18 +21,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      # Orphaned multi-arch children included.
-      - name: Delete Untagged Versions
-        uses: snok/container-retention-policy@v3.1.0
-        with:
-          account: user
-          token: ${{ secrets.GITHUB_TOKEN }}
-          image-names: mitra
-          tag-selection: untagged
-          cut-off: 1w
-          dry-run: true
-
-      # The `sha-*` tags, keeping the most recent.
+      # An image goes only once it is past the cut-off and outside the most recent ones.
       - name: Prune Commit Tags
         uses: snok/container-retention-policy@v3.1.0
         with:
@@ -41,18 +30,17 @@ jobs:
           image-names: mitra
           tag-selection: tagged
           image-tags: 'sha-*'
-          cut-off: 1w
-          keep-n-most-recent: 10
-          dry-run: true
+          cut-off: 4w
+          keep-n-most-recent: 30
+          dry-run: false
 
-      # The `pr-*` tags, once their pull request has long been merged or closed.
-      - name: Prune Pull Request Tags
+      # Last, so the parts of the images pruned above are orphans by now and go too.
+      - name: Delete Untagged Versions
         uses: snok/container-retention-policy@v3.1.0
         with:
           account: user
           token: ${{ secrets.GITHUB_TOKEN }}
           image-names: mitra
-          tag-selection: tagged
-          image-tags: 'pr-*'
-          cut-off: 4w
-          dry-run: true
+          tag-selection: untagged
+          cut-off: 1w
+          dry-run: false

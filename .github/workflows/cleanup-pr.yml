@@ -1,0 +1,26 @@
+name: Cleanup Pull Request Image
+
+# A pull request's `pr-<number>` image is deleted once it is merged or closed, however
+# long it stayed open. Pull requests from forks push no image, as their token cannot
+# write packages. `pull_request_target` gives this run the write token; it checks out nothing.
+on:
+  pull_request_target:
+    types: [closed]
+
+jobs:
+  cleanup:
+    name: 🧹 Delete Image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete pr-${{ github.event.pull_request.number }}
+        uses: snok/container-retention-policy@v3.1.0
+        with:
+          account: user
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: mitra
+          tag-selection: tagged
+          image-tags: pr-${{ github.event.pull_request.number }}
+          cut-off: 1s
+          dry-run: false
