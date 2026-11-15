@@ -1,4 +1,4 @@
-import { type EntryShift, type Entry } from '#features/entries'
+import { type EntryShift, type Entry, EntryStatus } from '#features/entries'
 import { EntryStore } from '#features/entries/client/EntryStore.js'
 import { DialogEntryScope, type EntryScope } from '#features/entries/client/DialogEntryScope.js'
 import { EntryOccurrenceChangeScope } from '#features/recurrence'
@@ -33,10 +33,12 @@ export class Hierarchy {
 		const series = !!entry.recurringEntryId
 		const subtasks = hasSubtaskAction && (intent === 'delete' || intent === 'move') ? entry.hierarchy.descendants.length : 0
 		const shifts = change && intent !== 'delete' ? entry.hierarchy.shiftOptions(change) : []
-		if (bypass || (!series && !subtasks && shifts.length < 2)) {
+		// A routine keeps count only of the dates that stay, so deleting one of its dates offers to cancel it instead.
+		const cancels = intent === 'delete' && !!entry.routineId && entry.statuses.includes(EntryStatus.Cancelled) && !entry.cancelled
+		if (bypass || (!series && !subtasks && !cancels && shifts.length < 2)) {
 			return Promise.resolve({ recurrence: series ? EntryOccurrenceChangeScope.This : undefined, subtasks: false })
 		}
-		return new DialogEntryScope({ entry, intent, series, subtasks, shifts }).confirm()
+		return new DialogEntryScope({ entry, intent, series, subtasks, shifts, cancels }).confirm()
 	}
 
 	/** Resolves recurrence scope without hierarchy options for single-entry mutations. */

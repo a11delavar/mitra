@@ -160,6 +160,7 @@ declare global {
 		"Calendar URL": unknown
 		"Calendars": unknown
 		"Calendars stored in Mitra itself, no account needed": unknown
+		"Cancel or delete?": unknown
 		"Cancelled": unknown
 		"Cancelled tasks and events leave the calendar. Search still finds them, and a cancelled task still counts towards progress.": unknown
 		"Change ${name}…": unknown
@@ -357,6 +358,7 @@ declare global {
 		"Integration options": unknown
 		"Integration Token": unknown
 		"Interval": unknown
+		"Its routine counts it as not kept": unknown
 		"Join ${service}": unknown
 		"Keep": unknown
 		"Keep it": unknown
@@ -384,6 +386,7 @@ declare global {
 		"Mark all required": unknown
 		"Mark as cancelled": unknown
 		"Mark as done": unknown
+		"Mark it cancelled": unknown
 		"Match the system": unknown
 		"Maybe": unknown
 		"McpSetting.Keywords": unknown

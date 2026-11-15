@@ -6,6 +6,7 @@ import { Calendars } from '#features/sources/client/Calendars.js'
 import { hierarchy } from '#features/relations/client/Hierarchy.js'
 import { RoutineField } from '#features/routines/client/RoutineField.js'
 import { type EntryTypeValue } from '../EntryType.js'
+import { EntryStatus } from '../EntryStatus.js'
 import type { EntrySegment } from './EntrySegment.js'
 import { EntryStore, reportSaveError } from './EntryStore.js'
 import { EntryEditorIntent } from './EntryEditorIntent.js'
@@ -84,6 +85,11 @@ export class EntryDetailsComponent extends Component {
 			return
 		}
 		this.close()
+		if (scope.cancel) {
+			entry.status = EntryStatus.Cancelled
+			EntryStore.notify()
+			return EntryStore.commit(entry, scope.recurrence).catch(reportSaveError)
+		}
 		return hierarchy.deleteScoped(entry, scope).catch(error =>
 			console.error('Deleting the entry failed, so it was restored in the view:', error))
 	}
