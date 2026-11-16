@@ -25,4 +25,8 @@ Koppel je TickTick-account, en de lijsten ervan komen in Mitra als takenagenda's
 Herinneringen bereiken de tools die je al gebruikt, zoals ntfy, Apprise of je eigen webhook.
 
 ## Meer talen
-Mitra is nu beschikbaar in het Japans en Vietnamees.
+Mitra is nu beschikbaar in het Japans, Koreaans en Vietnamees.
+
+## Bijdragers
+- [@a11delavar](https://github.com/a11delavar)
+- [@Mugwort150](https://github.com/Mugwort150)

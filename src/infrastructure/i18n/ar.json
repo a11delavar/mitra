@@ -1146,7 +1146,7 @@
 	"Everything travels intact": "ينتقل كل شيء كما هو",
 	"Hide done tasks": "إخفاء المهام المكتملة",
 	"Hide cancelled": "إخفاء الملغى",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "إخفاء منجزة مكتملة منتهية مهام ترتيب تنظيف",
 	"HideCancelledSetting.Keywords": "إخفاء ملغاة مهام أحداث ترتيب تنظيف",
 	"Language": "اللغة",
 	"Automatic (${region})": "تلقائي (${region})",

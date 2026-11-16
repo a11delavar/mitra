@@ -25,4 +25,8 @@ Mitra 0.9 仍在规划中。它把更大的工作汇聚到一起并展示接下�
 提醒会送达你已经在用的工具，例如 ntfy、Apprise 或你自己的 webhook。
 
 ## 更多语言
-Mitra 现已支持日语和越南语。
+Mitra 现已支持日语、韩语和越南语。
+
+## 贡献者
+- [@a11delavar](https://github.com/a11delavar)
+- [@Mugwort150](https://github.com/Mugwort150)

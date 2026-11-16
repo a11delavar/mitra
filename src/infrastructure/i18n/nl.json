@@ -656,7 +656,7 @@
 	"Everything travels intact": "Alles gaat ongewijzigd mee",
 	"Hide done tasks": "Afgeronde taken verbergen",
 	"Hide cancelled": "Geannuleerd verbergen",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "verbergen gedaan voltooid afgerond taken opruimen",
 	"HideCancelledSetting.Keywords": "verbergen geannuleerd taken afspraken opruimen",
 	"Language": "Taal",
 	"Automatic (${region})": "Automatisch (${region})",

@@ -656,7 +656,7 @@
 	"Everything travels intact": "所有内容都会完整保留",
 	"Hide done tasks": "隐藏已完成的任务",
 	"Hide cancelled": "隐藏已取消",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "隐藏 完成 已完成 做完 任务 整理 hide done",
 	"HideCancelledSetting.Keywords": "隐藏 取消 已取消 任务 日程 整理 hide cancelled",
 	"Language": "语言",
 	"Automatic (${region})": "自动（${region}）",

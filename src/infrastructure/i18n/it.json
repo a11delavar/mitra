@@ -656,7 +656,7 @@
 	"Everything travels intact": "Tutto arriva intatto",
 	"Hide done tasks": "Nascondi le attività completate",
 	"Hide cancelled": "Nascondi annullati",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "nascondere nascondi completate fatte finite attività ripulire",
 	"HideCancelledSetting.Keywords": "nascondere nascondi annullate annullati attività eventi ripulire",
 	"Language": "Lingua",
 	"Automatic (${region})": "Automatico (${region})",

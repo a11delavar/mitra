@@ -25,4 +25,8 @@ Połącz swoje konto TickTick, a jego listy trafią do Mitry jako kalendarze zad
 Przypomnienia docierają do narzędzi, których już używasz, takich jak ntfy, Apprise czy twój własny webhook.
 
 ## Więcej języków
-Mitra jest teraz dostępna po japońsku i wietnamsku.
+Mitra jest teraz dostępna po japońsku, koreańsku i wietnamsku.
+
+## Współtwórcy
+- [@a11delavar](https://github.com/a11delavar)
+- [@Mugwort150](https://github.com/Mugwort150)

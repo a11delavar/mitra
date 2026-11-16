@@ -25,4 +25,8 @@ Conecta tu cuenta de TickTick y sus listas llegan a Mitra como calendarios de ta
 Los recordatorios llegan a las herramientas que ya usas, como ntfy, Apprise o tu propio webhook.
 
 ## Más idiomas
-Mitra ya está disponible en japonés y vietnamita.
+Mitra ya está disponible en japonés, coreano y vietnamita.
+
+## Colaboradores
+- [@a11delavar](https://github.com/a11delavar)
+- [@Mugwort150](https://github.com/Mugwort150)
