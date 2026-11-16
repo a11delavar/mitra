@@ -1,9 +1,9 @@
 ---
 title: 設定
-description: 環境変数で Mitra を設定する方法、ほとんどのサーバーが必要とする変数、そして全変数とその既定値。
+description: 環境変数で Mitra を設定する方法、ほとんどのサーバーが必要とする変数、そして全変数とそのデフォルト値。
 ---
 
-Mitra はすべて環境変数で設定します。マウントする設定ファイルはありません。コンテナに変数を設定すれば、Mitra が起動時にそれを読みます。すべての変数は任意で、設定しない変数は[後述](#all-variables)の既定値を使います。
+Mitra はすべて環境変数で設定します。マウントする設定ファイルはありません。コンテナに変数を設定すれば、Mitra が起動時にそれを読みます。すべての変数は任意で、設定しない変数は[後述](#all-variables)のデフォルト値を使います。
 
 Docker Compose では、`environment` ブロックに書きます:
 
@@ -89,7 +89,7 @@ environment:
 
 ### コア
 
-| 変数 | 既定値 | 説明 |
+| 変数 | デフォルト値 | 説明 |
 | --- | --- | --- |
 | `MITRA_URL` | *(未設定)* | 人が Mitra に届く[公開アドレス](#set-the-public-url)。`https://mitra.example.com` など。サインインと Google カレンダーのリターンアドレス、Cookie を secure にするかどうかは、ここから決まります。localhost で試す間は任意、[サインイン](sso.md)では必須、[Google カレンダー](integrations/google.md)や公開サーバーでは設定を推奨します。 |
 | `MITRA_NAME` | *(Mitra。各利用者の言語で)* | サイドバー、ブラウザーのタブ、インストールしたアプリに表示される[名前](#name-your-instance)。 |
@@ -100,19 +100,19 @@ environment:
 
 ### リマインダー
 
-| 変数 | 既定値 | 説明 |
+| 変数 | デフォルト値 | 説明 |
 | --- | --- | --- |
 | `MITRA_VAPID_SUBJECT` | `mailto:mitra@localhost` | プッシュサービスに見せる、サーバーの[リマインダー](reminders.md)の連絡先。たいてい `mailto:` アドレスです。Mitra の利用者には見えません。署名キーは自動生成されるので、他に設定は不要です。 |
 
 ### 場所
 
-| 変数 | 既定値 | 説明 |
+| 変数 | デフォルト値 | 説明 |
 | --- | --- | --- |
 | `MITRA_PHOTON_URL` | `https://photon.komoot.io` | 場所フィールドの背後にある [Photon ジオコーダー](location.md)。komoot の公開サーバーではなく、自分の Photon サーバーを指せます。 |
 
 ### 添付ファイル
 
-| 変数 | 既定値 | 説明 |
+| 変数 | デフォルト値 | 説明 |
 | --- | --- | --- |
 | `MITRA_FILE_MAX_SIZE` | `25M` | 1人が項目に[添付](attachments.md)できるファイルの最大サイズ。バイト数、または `k`、`M`、`G` の接尾辞付きで書きます。`0` にするとファイルの追加を無効にします。 |
 | `MITRA_FILE_QUOTA` | *(未設定)* | 各利用者が添付ファイルに保存できる総量。書き方は同じです。未設定なら制限なしです。 |
@@ -121,7 +121,7 @@ environment:
 
 両方を設定すると、利用者が [Google カレンダー](integrations/google.md)を接続できます。ID だけを設定すると Mitra は起動しません。
 
-| 変数 | 既定値 | 説明 |
+| 変数 | デフォルト値 | 説明 |
 | --- | --- | --- |
 | `MITRA_GOOGLE_CLIENT_ID` | *(未設定)* | Google Cloud コンソールの OAuth クライアント ID。 |
 | `MITRA_GOOGLE_CLIENT_SECRET` | *(未設定)* | OAuth クライアントシークレット。`MITRA_GOOGLE_CLIENT_ID` を設定したときは必須です。 |
@@ -130,7 +130,7 @@ environment:
 
 `MITRA_OIDC_ISSUER` を設定すると[サインイン](sso.md)が有効になります。必要な変数が欠けていると、Mitra は起動を拒否します。
 
-| 変数 | 既定値 | 説明 |
+| 変数 | デフォルト値 | 説明 |
 | --- | --- | --- |
 | `MITRA_OIDC_ISSUER` | *(未設定)* | OIDC プロバイダーの issuer URL。`MITRA_OIDC_CLIENT_ID` と `MITRA_URL` が必要です。 |
 | `MITRA_OIDC_CLIENT_ID` | *(未設定)* | プロバイダーに登録したクライアント ID。 |

@@ -51,7 +51,7 @@ docker compose up -d
 
 変数は両方設定するか、両方設定しないかのどちらかです。クライアント ID だけでシークレットがない状態では Mitra は起動を拒否するので、中途半端な設定が見逃されることはありません。
 
-`MITRA_URL` はリダイレクト URI のアドレスと一致している必要があります。これがなければ、Mitra は開かれたアドレスを使います。`localhost` で試す分にはそれで十分です。`localhost` 以外では Google が `https://` のリダイレクトアドレスしか受け付けないため、実運用のサーバーには [HTTPS](../configuration.md#put-it-behind-https) と `MITRA_URL` が必要です。すべての変数は[構成](../configuration.md#all-variables)に一覧されています。
+`MITRA_URL` はリダイレクト URI のアドレスと一致している必要があります。これがなければ、Mitra は開かれたアドレスを使います。`localhost` で試す分にはそれで十分です。`localhost` 以外では Google が `https://` のリダイレクトアドレスしか受け付けないため、実運用のサーバーには [HTTPS](../configuration.md#put-it-behind-https) と `MITRA_URL` が必要です。すべての変数は[設定](../configuration.md#all-variables)に一覧されています。
 
 ## アカウントを接続する
 
