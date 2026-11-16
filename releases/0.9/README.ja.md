@@ -25,4 +25,8 @@ TickTickアカウントを接続すると、そのリストがタスクのカレ
 リマインダーが、ntfy、Apprise、独自のwebhookなど、すでに使っているツールに届きます。
 
 ## 対応言語の追加
-Mitraは日本語とベトナム語にも対応しました。
+Mitraは日本語、韓国語、ベトナム語にも対応しました。
+
+## コントリビューター
+- [@a11delavar](https://github.com/a11delavar)
+- [@Mugwort150](https://github.com/Mugwort150)

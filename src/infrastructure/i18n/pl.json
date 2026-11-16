@@ -656,7 +656,7 @@
 	"Everything travels intact": "Wszystko trafi tam w całości",
 	"Hide done tasks": "Ukryj gotowe zadania",
 	"Hide cancelled": "Ukryj anulowane",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "ukryj ukończone wykonane zrobione zadania porządek porzadek",
 	"HideCancelledSetting.Keywords": "ukryj anulowane zadania wydarzenia porządek porzadek",
 	"Language": "Język",
 	"Automatic (${region})": "Automatycznie (${region})",

@@ -25,4 +25,8 @@ Verbinde dein TickTick-Konto, und seine Listen kommen als Aufgabenkalender in Mi
 Erinnerungen erreichen die Werkzeuge, die du schon nutzt, etwa ntfy, Apprise oder deinen eigenen Webhook.
 
 ## Mehr Sprachen
-Mitra gibt es jetzt auch auf Japanisch und Vietnamesisch.
+Mitra gibt es jetzt auch auf Japanisch, Koreanisch und Vietnamesisch.
+
+## Mitwirkende
+- [@a11delavar](https://github.com/a11delavar)
+- [@Mugwort150](https://github.com/Mugwort150)

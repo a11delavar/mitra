@@ -656,7 +656,7 @@
 	"Everything travels intact": "Tout arrive intact",
 	"Hide done tasks": "Masquer les tâches terminées",
 	"Hide cancelled": "Masquer les éléments annulés",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "masquer cacher terminées faites achevées tâches désencombrer",
 	"HideCancelledSetting.Keywords": "masquer cacher annulées annulés tâches événements désencombrer",
 	"Language": "Langue",
 	"Automatic (${region})": "Automatique (${region})",

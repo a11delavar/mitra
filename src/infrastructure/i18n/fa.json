@@ -812,7 +812,7 @@
 	"Everything travels intact": "همه اطلاعات بدون تغییر منتقل می‌شوند",
 	"Hide done tasks": "پنهان کردن کارهای انجام‌شده",
 	"Hide cancelled": "پنهان کردن لغوشده‌ها",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "پنهان مخفی انجام‌شده تمام‌شده کامل کارها مرتب‌سازی",
 	"HideCancelledSetting.Keywords": "پنهان مخفی لغوشده کارها رویدادها مرتب‌سازی",
 	"Language": "زبان",
 	"Automatic (${region})": "خودکار (${region})",

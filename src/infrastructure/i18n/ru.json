@@ -1006,7 +1006,7 @@
 	"Everything travels intact": "Всё будет перенесено без потерь",
 	"Hide done tasks": "Скрыть выполненные задачи",
 	"Hide cancelled": "Скрыть отменённое",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "скрыть спрятать выполненные завершённые завершенные задачи убрать лишнее hide done",
 	"HideCancelledSetting.Keywords": "скрыть спрятать отменённые отмененные задачи события убрать лишнее hide cancelled",
 	"Language": "Язык",
 	"Automatic (${region})": "Автоматически (${region})",

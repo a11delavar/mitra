@@ -671,7 +671,7 @@
 	"Everything travels intact": "Alles kommt unverändert an",
 	"Hide done tasks": "Erledigte Aufgaben ausblenden",
 	"Hide cancelled": "Abgebrochenes ausblenden",
-	"HideDoneTasksSetting.Keywords": "$1",
+	"HideDoneTasksSetting.Keywords": "ausblenden verbergen erledigt abgeschlossen fertig aufgaben aufräumen",
 	"HideCancelledSetting.Keywords": "ausblenden verbergen abgebrochen abgesagt aufgaben termine aufräumen",
 	"Language": "Sprache",
 	"Automatic (${region})": "Automatisch (${region})",

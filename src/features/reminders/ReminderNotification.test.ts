@@ -108,7 +108,7 @@ describe('ReminderNotification', () => {
 		})
 
 		it('falls back to English for a language the app does not speak', () => {
-			assert.equal(body({}, start - 26 * hour, { locale: 'ko', timeZone: BERLIN }).startsWith('Tomorrow'), true)
+			assert.equal(body({}, start - 26 * hour, { locale: 'tlh', timeZone: BERLIN }).startsWith('Tomorrow'), true)
 		})
 	})
 
