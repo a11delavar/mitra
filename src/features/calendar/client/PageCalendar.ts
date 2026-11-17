@@ -474,9 +474,14 @@ export class PageCalendar extends PageComponent<CalendarParameters> {
 							min-inline-size: 7rem;
 							font-weight: 400;
 
+							/* The button inside shrinks with its host; at its own content size it painted over the view select. */
 							&::part(button) {
 								justify-content: flex-start;
 								border-radius: calc(2 * var(--border-radius));
+								box-sizing: border-box;
+								inline-size: 100%;
+								min-inline-size: 0;
+								overflow: hidden;
 							}
 
 							span {
