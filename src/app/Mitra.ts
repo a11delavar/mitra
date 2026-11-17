@@ -20,6 +20,7 @@ import { EntrySegmentComponent } from '#features/entries/client/EventSegment.js'
 import { AvailabilitySegment } from '#features/availability/client/AvailabilitySegment.js'
 import { EntryConnections } from '#features/relations/client/EntryConnections.js'
 import { PageCalendar } from '#features/calendar/client/PageCalendar.js'
+import { NowPanel } from '#features/calendar/client/NowPanel.js'
 import { CommandPalette } from '#features/commands/client/CommandPalette.js'
 import { Planning } from '#features/planning/client/Planning.js'
 import { EntryDetailsComponent } from '#features/entries/client/EventDetails.js'
@@ -246,6 +247,7 @@ export class Mitra extends Application {
 			${Choice.styles}
 			${Markdown.styles}
 			${PageCalendar.styles}
+			${NowPanel.styles}
 			${CommandPalette.styles}
 			${Sidebar.styles}
 			${Planning.styles}
