@@ -65,6 +65,18 @@ describe('UpdateEntry', () => {
 			assert.equal(converted.type, EntryType.Task)
 			assert.equal(await stored(created.id!), undefined)
 		})
+
+		it('keeps its relations both ways when it becomes a task', async () => {
+			await SettleHomeTimeZone.call({ id: TimeZone.of('Europe/Berlin') })
+			type Related = Row & { readonly uid: string, readonly relations: Array<{ readonly type: string, readonly targetUid: string, readonly direction?: string }> }
+			const event = (heading: string) => server.tool<Related>('create_entry', { heading, type: 'event', start: '2026-07-01T09:00:00Z', end: '2026-07-01T10:00:00Z' })
+			const [first, middle, last] = [await event('Plan'), await event('Build'), await event('Launch')]
+			await server.tool('relate_entries', { id: middle.id, type: 'FINISHTOSTART', target: first.id })
+			await server.tool('relate_entries', { id: last.id, type: 'FINISHTOSTART', target: middle.id })
+			const converted = await server.tool<Related>('update_entry', { id: middle.id, type: 'task' })
+			const lines = (entry: Related) => entry.relations.map(relation => [relation.direction, relation.type, relation.targetUid]).sort()
+			assert.deepEqual(lines(converted), [['incoming', 'FINISHTOSTART', last.uid], ['outgoing', 'FINISHTOSTART', first.uid]].sort())
+		})
 	})
 
 	describe('as a tool', () => {

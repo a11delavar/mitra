@@ -35,6 +35,10 @@ export class UpdateEntry extends Operation<Parameters, Entry> {
 
 		const { recreates } = change
 		const saved = await change.save(em)
+		// A re-creation under a new uid would leave the links pointing at the entry naming the one that is gone.
+		if (saved.uid !== existing.uid) {
+			await user.repointRelations(em, new Map([[existing.uid!, saved.uid!]]))
+		}
 		await em.flush()
 		// Read back as any read answers it, so the browser keeps the entries it reaches until its next fetch.
 		const graph = await user.getRelationGraph(em, [saved.uid])
