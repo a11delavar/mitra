@@ -42,6 +42,11 @@ export class ModalSheet extends Component {
 				--mo-sheet-travel-size: 100%;
 			}
 
+			/* The size is this sheet's alone: a sheet opened from inside it, such as a routine's from the sidebar, sizes its own way. */
+			slot {
+				--mitra-modal-sheet-size: initial;
+			}
+
 			/* Separate animations, so that a settled sheet exits with the full duration. */
 			@keyframes slide-in {
 				from { translate: var(--mo-sheet-motion-origin); }

@@ -43,6 +43,8 @@ export class RoutinesTab extends Component {
 
 				/* Folded by default: a correction made once, looked at rarely. Its summary reads as a section heading. */
 				> details {
+					interpolate-size: allow-keywords;
+
 					> summary {
 						display: flex;
 						align-items: center;
@@ -74,6 +76,27 @@ export class RoutinesTab extends Component {
 
 					&[open] > summary > mitra-icon {
 						rotate: 90deg;
+					}
+
+					&::details-content {
+						block-size: 0;
+						opacity: 0;
+						overflow: clip;
+						overflow-clip-margin: 0.5rem;
+					}
+
+					&[open]::details-content {
+						block-size: auto;
+						opacity: 1;
+					}
+
+					@media (prefers-reduced-motion: no-preference) {
+						&::details-content {
+							transition:
+								block-size 0.3s cubic-bezier(0.1, 0.9, 0.2, 1),
+								opacity 0.2s ease,
+								content-visibility 0.3s allow-discrete;
+						}
 					}
 
 					/* What came long ago and comes no more, folded: its rows as the sections above lay theirs. */
@@ -142,9 +165,11 @@ export class RoutinesTab extends Component {
 	}
 
 	/** Opened at the end of a long list, it shows what it holds rather than unfolding out of sight. */
-	private static handleDissolvedToggle(e: Event) {
+	private static async handleDissolvedToggle(e: Event) {
 		const details = e.currentTarget as HTMLDetailsElement
 		if (details.open) {
+			// After it has unfolded: measured mid-way, it would scroll to a fraction of what it holds.
+			await Promise.allSettled(details.getAnimations({ subtree: true }).map(animation => animation.finished))
 			details.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
 		}
 	}
