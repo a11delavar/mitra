@@ -587,6 +587,7 @@ declare global {
 		"Show previously visible calendars": unknown
 		"Show Previously Visible Calendars": unknown
 		"Show the other time zones": unknown
+		"Show whole weeks": unknown
 		"Showing ${city} time. Switch to the current time zone": unknown
 		"Showing the current time zone. Switch to ${city} time": unknown
 		"Shown above the time axis. Leave empty to use the automatic name.": unknown
@@ -638,6 +639,7 @@ declare global {
 		"The streak ended": unknown
 		"The task databases of your workspace": unknown
 		"The tasks of your Todoist projects": unknown
+		"The week view shows seven days, starting on the first day of the week.": unknown
 		"Their copies landed but the originals could not be deleted. Delete them here by hand.": unknown
 		"Theme": unknown
 		"ThemeSetting.Keywords": unknown
@@ -710,6 +712,7 @@ declare global {
 		"When": unknown
 		"Where new events and tasks are created": unknown
 		"Where your reminders arrive": unknown
+		"WholeWeekSetting.Keywords": unknown
 		"Workspace": unknown
 		"World": unknown
 		"Year": unknown
