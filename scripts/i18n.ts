@@ -15,7 +15,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const srcDir = path.resolve(here, '../src')
 const i18nDir = path.resolve(srcDir, 'infrastructure/i18n')
 const keysFile = path.join(i18nDir, 'keys.auto-generated.ts')
-const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json', 'fa.json', 'zh.json', 'pl.json', 'nl.json', 'ar.json', 'ru.json', 'ja.json']
+const dicts = ['de.json', 'fr.json', 'es.json', 'pt.json', 'it.json', 'fa.json', 'zh.json', 'pl.json', 'nl.json', 'ar.json', 'ru.json', 'ja.json', 'ko.json']
 
 const analyzeOnly = process.argv.includes('--analyze')
 
@@ -51,7 +51,8 @@ function sourceFiles(dir: string): Array<string> {
 	})
 }
 
-const callPattern = /\bt\(\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g
+// `localize` is `t` handed in for a reader's language on the server (`formatAsWholeUnit(localize)`).
+const callPattern = /\b(?:t|localize)\(\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g
 
 // Collect provider class labels and descriptions which are dynamically localized via t(class.label) / t(class.description).
 const descriptionPattern = /\bstatic\s+(?:(?:readonly|override)\s+)*(?:label|description)\s*(?::\s*string\s*)?=\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g

@@ -5,6 +5,7 @@
 @import '@fontsource-variable/vazirmatn';
 @import '@fontsource-variable/noto-sans-sc';
 @import '@fontsource-variable/noto-sans-jp';
+@import '@fontsource-variable/noto-sans-kr';
 @import './generated/mitra.css';
 @import './generated/callouts.css';
 
@@ -34,13 +35,17 @@
 	scrollbar-color: color-mix(in srgb, var(--color-text) 15%, transparent) transparent;
 }
 
-/* As the app: Han characters read in Noto Sans SC on Chinese pages alone, in Noto Sans JP on Japanese ones. */
+/* As the app: Han characters read in Noto Sans SC on Chinese pages alone, in Noto Sans JP on Japanese ones, in Noto Sans KR on Korean ones. */
 :root:lang(zh) {
 	--mitra-font: 'Inter Variable', 'Inter', 'Noto Sans SC Variable', ui-sans-serif, system-ui, sans-serif;
 }
 
 :root:lang(ja) {
 	--mitra-font: 'Inter Variable', 'Inter', 'Noto Sans JP Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root:lang(ko) {
+	--mitra-font: 'Inter Variable', 'Inter', 'Noto Sans KR Variable', ui-sans-serif, system-ui, sans-serif;
 }
 
 *,

@@ -35,4 +35,7 @@ export const themeStyles = css`
 	body:lang(ja) {
 		--font-family: 'Inter Variable', 'Noto Sans JP Variable', sans-serif;
 	}
+	body:lang(ko) {
+		--font-family: 'Inter Variable', 'Noto Sans KR Variable', sans-serif;
+	}
 `

@@ -13,6 +13,7 @@ declare global {
 		"\"${name}\" leaves the Routines tab, and entries with its title are no longer gathered into a routine. Its entries stay on your calendar.": unknown
 		"${browser} on ${platform}": unknown
 		"${count:number} in a row": unknown
+		"${count:number} min": unknown
 		"${count:number} more": unknown
 		"${count:number} of ${total:number}": unknown
 		"${count:number} of ${total:number} kept": unknown
@@ -26,6 +27,7 @@ declare global {
 		"${count:pluralityNumber} carry a progress percentage": unknown
 		"${count:pluralityNumber} carry a visibility": unknown
 		"${count:pluralityNumber} copies could not be taken back and are now in both calendars.": unknown
+		"${count:pluralityNumber} days": unknown
 		"${count:pluralityNumber} documentation changes": unknown
 		"${count:pluralityNumber} entries": unknown
 		"${count:pluralityNumber} entries added to ${name}": unknown
@@ -36,6 +38,7 @@ declare global {
 		"${count:pluralityNumber} get a fixed time zone": unknown
 		"${count:pluralityNumber} go back to To Do": unknown
 		"${count:pluralityNumber} have participants": unknown
+		"${count:pluralityNumber} hours": unknown
 		"${count:pluralityNumber} improvements": unknown
 		"${count:pluralityNumber} landed anyway and could not be taken back. Delete them in ${name} by hand.": unknown
 		"${count:pluralityNumber} lose their attachments": unknown
@@ -61,6 +64,7 @@ declare global {
 		"${count:pluralityNumber} selected": unknown
 		"${count:pluralityNumber} stayed in ${name}": unknown
 		"${count:pluralityNumber} stop being all-day": unknown
+		"${count:pluralityNumber} weeks": unknown
 		"${count:pluralityNumber} were left out": unknown
 		"${count:pluralityNumber} yes": unknown
 		"${done:number} of ${total:pluralityNumber} checklist items done": unknown
