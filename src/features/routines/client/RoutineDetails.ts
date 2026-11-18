@@ -272,9 +272,10 @@ export class RoutineDetails extends Component {
 						grid-template-columns: repeat(var(--weeks), var(--week));
 					}
 
+					/* A month's name keeps to its own weeks, so a long one ("Tháng 4") wraps rather than run into the next. */
 					> .months > span {
-						white-space: nowrap;
-						overflow: visible;
+						align-self: end;
+						padding-inline-end: var(--gap);
 					}
 
 					> .weekdays {
@@ -424,11 +425,13 @@ export class RoutineDetails extends Component {
 		// Its date, and what became of it where it had one.
 		const titleOf = (day: Temporal.PlainDate) => [dayOf(day.toString()).format({ dateStyle: 'medium' }), statusOn(day)?.format()].filter(Boolean).join(' · ')
 		const weekday = (index: number) => dayOf(first.add({ days: index }).toString()).format({ weekday: 'short' })
+		// The grid column of the week a day falls in.
+		const column = (day: Temporal.PlainDate) => Math.floor(first.until(day).days / 7) + 1
 		return html`
 			<div class="year" style="--weeks: ${days.length / 7}">
 				<span class="months">
-					${days.filter(day => day.day === 1).map(day => html`
-						<span style="grid-column: ${Math.floor(first.until(day).days / 7) + 1}">${dayOf(day.toString()).format({ month: 'short' })}</span>
+					${days.filter(day => day.day === 1).map((day, index, months) => html`
+						<span style="grid-column: ${column(day)} / ${months[index + 1] ? column(months[index + 1]!) : -1}">${dayOf(day.toString()).format({ month: 'short' })}</span>
 					`)}
 				</span>
 				<span class="weekdays">${[0, 1, 2, 3, 4, 5, 6].map(index => html`<span>${index % 2 ? '' : weekday(index)}</span>`)}</span>

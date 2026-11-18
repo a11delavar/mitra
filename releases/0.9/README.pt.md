@@ -25,7 +25,12 @@ Conecte sua conta do TickTick, e as listas dela chegam ao Mitra como calendário
 Os lembretes chegam às ferramentas que você já usa, como ntfy, Apprise ou o seu próprio webhook.
 
 ## Mais idiomas
-O Mitra agora está disponível em japonês, coreano e vietnamita.
+O Mitra agora fala japonês, coreano e vietnamita, cada um totalmente traduzido, incluindo a documentação e o site. O japonês e o coreano aparecem em fontes feitas para eles.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="japanese-week-dark.webp">
+	<img src="japanese-week-light.webp" alt="A semana em japonês, com um evento recorrente aberto no editor">
+</picture>
 
 ## Colaboradores
 - [@a11delavar](https://github.com/a11delavar)

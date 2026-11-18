@@ -13,8 +13,9 @@ import ar from './ar.json' with { type: 'json' }
 import ru from './ru.json' with { type: 'json' }
 import ja from './ja.json' with { type: 'json' }
 import ko from './ko.json' with { type: 'json' }
+import vi from './vi.json' with { type: 'json' }
 
-const dictionaries = { en, de, fr, es, pt, it, fa, zh, pl, nl, ar, ru, ja, ko }
+const dictionaries = { en, de, fr, es, pt, it, fa, zh, pl, nl, ar, ru, ja, ko, vi }
 Localizer.dictionaries.add(dictionaries)
 
 /** `t()` in a locale's language (`en-GB` reads English), for the server, which has no current one. Unknown languages read English. */

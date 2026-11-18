@@ -25,7 +25,12 @@ Verbinde dein TickTick-Konto, und seine Listen kommen als Aufgabenkalender in Mi
 Erinnerungen erreichen die Werkzeuge, die du schon nutzt, etwa ntfy, Apprise oder deinen eigenen Webhook.
 
 ## Mehr Sprachen
-Mitra gibt es jetzt auch auf Japanisch, Koreanisch und Vietnamesisch.
+Mitra spricht jetzt Japanisch, Koreanisch und Vietnamesisch, jede Sprache vollständig übersetzt, die Dokumentation und die Website eingeschlossen. Japanisch und Koreanisch stehen in Schriften, die für sie gemacht sind.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="japanese-week-dark.webp">
+	<img src="japanese-week-light.webp" alt="Die Woche auf Japanisch, mit einem wiederkehrenden Termin offen im Editor">
+</picture>
 
 ## Mitwirkende
 - [@a11delavar](https://github.com/a11delavar)

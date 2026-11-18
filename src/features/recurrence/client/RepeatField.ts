@@ -277,7 +277,7 @@ export class RepeatField extends Component {
 						${draft.freq !== RecurrenceFrequency.Weekly ? html.nothing : html`
 							<mitra-selection-group multiple aria-label=${t('Weekdays')} .value=${live(draft.byday?.map(weekday => weekday.code) ?? [])} @change=${this.chooseWeekdays}>
 								${RecurrenceWeekday.week().map(weekday => html`
-									<mitra-toggle value=${weekday.code} title=${weekday.format()}>${weekday.format().slice(0, 2)}</mitra-toggle>
+									<mitra-toggle value=${weekday.code} title=${weekday.format()}>${weekday.format(undefined, 'narrow')}</mitra-toggle>
 								`)}
 							</mitra-selection-group>
 						`}

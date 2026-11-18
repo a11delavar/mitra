@@ -68,9 +68,9 @@ export class RecurrenceWeekday {
 		return !!other && this.code === other.code && this.ordinal === other.ordinal
 	}
 
-	/** Its short name ("Thu"), read off a reference week in UTC (2024-01-01 was a Monday), so no zone can shift the day. */
-	format(locale: Intl.LocalesArgument = Localizer.locales.current) {
-		return new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(Date.UTC(2024, 0, this.dayOfWeek))
+	/** Its name ("Thu", narrow "T"), read off a reference week in UTC (2024-01-01 was a Monday), so no zone can shift the day. */
+	format(locale: Intl.LocalesArgument = Localizer.locales.current, weekday: 'short' | 'narrow' = 'short') {
+		return new Intl.DateTimeFormat(locale, { weekday, timeZone: 'UTC' }).format(Date.UTC(2024, 0, this.dayOfWeek))
 	}
 
 	toString() {

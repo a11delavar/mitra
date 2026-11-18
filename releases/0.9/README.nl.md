@@ -25,7 +25,12 @@ Koppel je TickTick-account, en de lijsten ervan komen in Mitra als takenagenda's
 Herinneringen bereiken de tools die je al gebruikt, zoals ntfy, Apprise of je eigen webhook.
 
 ## Meer talen
-Mitra is nu beschikbaar in het Japans, Koreaans en Vietnamees.
+Mitra spreekt nu Japans, Koreaans en Vietnamees, elk volledig vertaald, de documentatie en de website inbegrepen. Japans en Koreaans staan in lettertypen die voor hen gemaakt zijn.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="japanese-week-dark.webp">
+	<img src="japanese-week-light.webp" alt="De week in het Japans, met een terugkerende afspraak open in de editor">
+</picture>
 
 ## Bijdragers
 - [@a11delavar](https://github.com/a11delavar)

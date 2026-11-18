@@ -25,7 +25,12 @@ TickTick 계정을 연결하면 목록이 작업 캘린더로 Mitra에 들어오
 알림이 ntfy, Apprise, 직접 만든 웹훅처럼 이미 쓰고 있는 도구로 전달됩니다.
 
 ## 더 많은 언어
-이제 Mitra를 일본어, 한국어, 베트남어로 쓸 수 있습니다.
+이제 Mitra를 일본어, 한국어, 베트남어로 쓸 수 있습니다. 각 언어는 문서와 웹사이트까지 모두 번역되어 있습니다. 일본어와 한국어는 각 언어를 위해 만들어진 글꼴로 표시됩니다.
+
+<picture>
+	<source media="(prefers-color-scheme: dark)" srcset="japanese-week-dark.webp">
+	<img src="japanese-week-light.webp" alt="일본어로 표시된 주간 보기, 반복 일정이 편집기에 열려 있음">
+</picture>
 
 ## 기여자
 - [@a11delavar](https://github.com/a11delavar)
